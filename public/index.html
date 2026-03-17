@@ -1,0 +1,1903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Slate — kaziir</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    :root {
+      --bg:       #f5f1eb;
+      --bg2:      #ede8e1;
+      --surface:  #faf8f5;
+      --border:   rgba(0,0,0,0.07);
+      --bmd:      rgba(0,0,0,0.13);
+      --bdk:      rgba(0,0,0,0.24);
+      --text:     #1c1815;
+      --text2:    #5c5550;
+      --muted:    #8a8480;
+      --subtle:   #b8b3ae;
+      --ink:      #12100e;
+
+      --earth:    #6b5c4e; --earth-bg:  #ede0d4;
+      --sage:     #4a6741; --sage-bg:   #ddebd8;
+      --rust:     #8b3a2a; --rust-bg:   #f5ddd8;
+      --sienna:   #7a4f2a; --sienna-bg: #f2e4d4;
+
+      --c-fresh:   #2d7a3e;
+      --c-staples: #b06a1a;
+      --c-rte:     #6b3fa0;
+      --c-drinks:  #1a6fa8;
+      --c-snacks:  #b83050;
+      --c-frozen:  #1a7a8a;
+      --c-home:    #6b6560;
+
+      --sans:  'DM Sans', sans-serif;
+      --serif: 'Instrument Serif', serif;
+      --mono:  'DM Mono', monospace;
+      
+      --sh-sm: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+      --sh:    0 4px 14px rgba(0,0,0,0.09), 0 1px 3px rgba(0,0,0,0.05);
+      --sh-lg: 0 16px 40px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.06);
+
+      --input-h:  38px;
+      --btn-h:    38px;
+      --btn-sm-h: 32px;
+    }
+    
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; font-size: 15px; }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 54px;
+      display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
+      background: rgba(245,241,235,0.95); backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-l { display: flex; align-items: center; gap: 10px; }
+    .nav-logo { font-family: var(--serif); font-size: 1.25rem; color: var(--ink); letter-spacing: -0.02em; }
+    .nav-badge {
+      font-size: 0.62rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--muted); border: 1px solid var(--bmd); padding: 2px 8px; border-radius: 999px; background: var(--bg2);
+    }
+    .tab-bar { display: flex; gap: 3px; }
+    .tab-btn {
+      font-size: 0.82rem; font-weight: 500; padding: 5px 14px; border-radius: 7px;
+      border: 1px solid transparent; cursor: pointer; background: none; color: var(--muted); transition: all 0.15s;
+    }
+    .tab-btn.active { background: var(--surface); border-color: var(--bmd); color: var(--text); box-shadow: var(--sh-sm); }
+    .tab-btn:hover:not(.active) { color: var(--text2); }
+
+    /* ── LAYOUT ── */
+    main { max-width: 860px; margin: 0 auto; padding: 72px 22px 80px; }
+    .page { display: none; }
+    .page.active { display: block; }
+    .ph { margin-bottom: 22px; }
+    .ph-title { font-family: var(--serif); font-size: 2.25rem; font-weight: 400; color: var(--ink); letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 4px; }
+    .ph-sub { font-size: 0.82rem; color: var(--muted); }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--sh-sm); }
+    .lbl { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 5px; }
+
+    /* ── UNIVERSAL INPUT HEIGHT ── */
+    input[type="text"], input[type="number"], select.cat-sel {
+      height: var(--input-h);
+      background: var(--bg); border: 1px solid var(--bmd); border-radius: 8px;
+      color: var(--text); font-family: var(--sans); font-size: 0.9rem;
+      padding: 0 11px; outline: none; width: 100%;
+      transition: border-color 0.18s, box-shadow 0.18s;
+      -moz-appearance: textfield;
+    }
+    input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; }
+    input:focus, select.cat-sel:focus { border-color: var(--bdk); box-shadow: 0 0 0 3px rgba(0,0,0,0.06); }
+    input::placeholder { color: var(--subtle); }
+
+    /* ── ADD FORM ── */
+    .add-card { padding: 16px; margin-bottom: 18px; }
+    .add-row1 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; margin-bottom: 10px; }
+    .add-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; margin-bottom: 14px; }
+    .add-row2-left { display: grid; grid-template-columns: 1fr 104px; gap: 0 10px; align-items: end; }
+    @media(max-width: 480px) {
+      .add-row1 { grid-template-columns: 1fr; }
+      .add-row2 { grid-template-columns: 1fr; }
+      .add-row2-left { grid-template-columns: 1fr 96px; }
+    }
+    .fg { display: flex; flex-direction: column; }
+
+    /* ── QTY STEPPER ── */
+    .stepper {
+      display: flex; align-items: center; gap: 0;
+      height: var(--input-h); width: 100%;
+      background: var(--bg); border: 1px solid var(--bmd); border-radius: 8px;
+      overflow: hidden;
+    }
+    .s-btn {
+      width: 28px; height: 100%; border: none; border-radius: 0;
+      background: var(--bg2); color: var(--text2); font-size: 1rem; font-weight: 400;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.14s; flex-shrink: 0; user-select: none;
+      border-right: 1px solid var(--bmd);
+    }
+    .s-btn:last-child { border-right: none; border-left: 1px solid var(--bmd); }
+    .s-btn:hover { background: var(--earth); color: #fff; }
+    .s-btn:active { opacity: 0.8; }
+    .s-inp {
+      flex: 1; height: 100%; border: none; background: transparent;
+      font-family: var(--mono); font-size: 0.82rem; color: var(--text);
+      text-align: center; outline: none; width: 0; min-width: 0;
+      padding: 0 4px; -moz-appearance: textfield;
+    }
+    .s-inp::-webkit-outer-spin-button, .s-inp::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    /* ── CATEGORY SELECT ── */
+    .cat-wrap { position: relative; display: flex; align-items: center; }
+    .cat-swatch { width: 9px; height: 9px; border-radius: 50%; position: absolute; left: 11px; pointer-events: none; z-index: 1; transition: background 0.2s; flex-shrink: 0; }
+    select.cat-sel { appearance: none; -webkit-appearance: none; padding: 0 30px 0 26px; cursor: pointer; font-weight: 500; }
+    .cat-arrow { position: absolute; right: 9px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--muted); }
+    .cat-arrow svg { width: 13px; height: 13px; display: block; }
+
+    /* ── UNIVERSAL BUTTON HEIGHT ── */
+    button { font-family: var(--sans); }
+    .btn-primary {
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+      height: var(--btn-h); padding: 0 20px;
+      background: var(--sienna); color: #fff; border: 1px solid var(--sienna);
+      border-radius: 8px; font-size: 0.88rem; font-weight: 600;
+      cursor: pointer; transition: opacity 0.14s, transform 0.1s; box-shadow: var(--sh-sm);
+      white-space: nowrap;
+    }
+    .btn-primary:hover { opacity: 0.84; }
+    .btn-primary:active { transform: scale(0.97); }
+    .btn-primary svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+    .btn-secondary {
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+      height: var(--btn-h); padding: 0 14px;
+      background: var(--earth-bg); border: 1px solid rgba(107,92,78,0.25); color: var(--earth);
+      border-radius: 8px; font-size: 0.88rem; font-weight: 500;
+      cursor: pointer; transition: all 0.16s;
+      white-space: nowrap;
+    }
+    .btn-secondary:hover { background: var(--earth); color: #fff; border-color: var(--earth); }
+    .btn-secondary svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+    .btn-sm {
+      display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+      height: var(--btn-sm-h); padding: 0 11px;
+      border-radius: 6px; font-size: 0.78rem; font-weight: 500;
+      cursor: pointer; transition: all 0.16s; white-space: nowrap;
+    }
+    .btn-sm-rust { background: var(--rust-bg); border: 1px solid rgba(139,58,42,0.2); color: var(--rust); }
+    .btn-sm-rust:hover { background: var(--rust); color: #fff; border-color: var(--rust); }
+    .btn-sm-sage { background: var(--sage-bg); border: 1px solid rgba(74,103,65,0.25); color: var(--sage); }
+    .btn-sm-sage:hover { background: var(--sage); color: #fff; border-color: var(--sage); }
+    .btn-sm-earth { background: var(--earth-bg); border: 1px solid rgba(107,92,78,0.25); color: var(--earth); }
+    .btn-sm-earth:hover { background: var(--earth); color: #fff; border-color: var(--earth); }
+    .btn-sm svg { width: 12px; height: 12px; }
+
+    .btn-check {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      height: var(--btn-h); padding: 0 18px;
+      border-radius: 9px; font-size: 0.9rem; font-weight: 600;
+      cursor: pointer; transition: all 0.18s; letter-spacing: -0.01em; width: 100%;
+    }
+    .btn-check.state-check { background: var(--earth-bg); color: var(--earth); border: 1px solid rgba(107,92,78,0.25); }
+    .btn-check.state-check:hover { background: var(--earth); color: #fff; }
+    .btn-check.state-checking { background: var(--bg2); color: var(--muted); cursor: wait; border: 1px solid var(--bmd); }
+    .btn-check.state-save { background: var(--sage-bg); color: var(--sage); border: 1px solid rgba(74,103,65,0.25); }
+    .btn-check.state-save:hover { background: var(--sage); color: #fff; }
+    .btn-check svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+    .add-actions { display: flex; gap: 8px; align-items: center; justify-content: flex-end; }
+
+    /* ── ITEMS LIST ── */
+    .list-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .list-lbl { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+    .list-r { display: flex; align-items: center; gap: 10px; }
+    .items-list { border-top: 1px solid var(--border); }
+
+    .cat-group-header {
+      display: flex; align-items: center; gap: 9px; padding: 11px 4px 7px;
+      border-bottom: 1px solid var(--border);
+    }
+    .cgh-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .cgh-label { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; }
+
+    .item-row {
+      display: grid; grid-template-columns: 24px 1fr 68px 84px 70px 26px;
+      gap: 6px; align-items: center; padding: 11px 4px; border-bottom: 1px solid var(--border);
+      animation: rowIn 0.18s ease;
+    }
+    @media(max-width: 520px) {
+      .item-row { grid-template-columns: 20px 1fr auto auto 24px; gap: 4px 8px; }
+      .i-price-col { display: none; }
+    }
+    @keyframes rowIn { from {opacity: 0; transform: translateY(4px)} to {opacity: 1; transform: translateY(0)} }
+    
+    .i-serial { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); text-align: center; user-select: none; }
+    .i-name { font-size: 0.9rem; color: var(--ink); font-weight: 500; letter-spacing: -0.01em; }
+    .i-brand { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+    .i-price-col .i-unit { font-family: var(--mono); font-size: 0.78rem; color: var(--text2); }
+    .i-price-col .i-unit-sub { font-size: 0.62rem; color: var(--subtle); margin-top: 1px; }
+    .i-unit { font-family: var(--mono); font-size: 0.78rem; color: var(--text2); }
+    .i-unit-sub { font-size: 0.62rem; color: var(--subtle); margin-top: 1px; }
+    .i-qty-ctrl { display: flex; align-items: center; gap: 4px; }
+    .iq-btn {
+      width: 24px; height: 24px; border-radius: 50%;
+      border: 1.5px solid var(--bmd); background: var(--bg); color: var(--text2);
+      font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.13s; flex-shrink: 0; line-height: 1; user-select: none;
+    }
+    .iq-btn:hover { background: var(--earth); color: #fff; border-color: var(--earth); }
+    .iq-btn:active { transform: scale(0.87); }
+    .iq-num { font-family: var(--mono); font-size: 0.8rem; min-width: 22px; text-align: center; color: var(--text); }
+    .i-total { font-family: var(--mono); font-size: 0.86rem; color: var(--ink); font-weight: 500; text-align: right; white-space: nowrap; }
+    .i-unit-price-sm { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); }
+    .btn-rm {
+      background: none; border: none; cursor: pointer; color: var(--subtle);
+      display: flex; align-items: center; justify-content: center;
+      width: 26px; height: 26px; border-radius: 50%; transition: all 0.14s; margin-left: auto;
+    }
+    .btn-rm:hover { color: var(--rust); background: var(--rust-bg); }
+    .btn-rm svg { width: 12px; height: 12px; }
+
+    .empty-state { text-align: center; padding: 44px 24px; color: var(--muted); }
+    .empty-state svg { margin: 0 auto 10px; display: block; opacity: 0.2; }
+    .empty-state p { font-size: 0.88rem; }
+
+    /* ── SUMMARY ── */
+    .summary-wrap { margin-top: 18px; }
+    .sum-card { padding: 22px; }
+    .sum-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+    @media(max-width: 500px) { .sum-grid { grid-template-columns: 1fr; } }
+    .sum-line { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 0.86rem; color: var(--text2); }
+    .sum-line:last-child { border: none; }
+    .sum-val { font-family: var(--mono); font-size: 0.86rem; color: var(--text); }
+    .sum-total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 14px; padding-top: 14px; border-top: 1.5px solid var(--bdk); }
+    .sum-total-lbl { font-family: var(--serif); font-size: 1.5rem; color: var(--ink); letter-spacing: -0.02em; }
+    .sum-total-val { font-family: var(--mono); font-size: 1.8rem; color: var(--c-fresh); font-weight: 500; letter-spacing: -0.03em; }
+    .save-actions { display: flex; flex-direction: column; gap: 10px; }
+    .save-meta { display: flex; flex-direction: column; gap: 8px; }
+
+    /* ── AI VERIFY RESULT ── */
+    .avr-wrap { display: none; }
+    .avr-wrap.show { display: block; }
+
+    .avr-section {
+      border: 1px solid var(--bmd); border-radius: 10px; overflow: hidden; margin-bottom: 8px;
+    }
+    .avr-section:last-child { margin-bottom: 0; }
+
+    .avr-toggle {
+      display: flex; align-items: center; gap: 9px; width: 100%; padding: 11px 14px;
+      background: var(--bg); border: none; cursor: pointer; text-align: left;
+      transition: background 0.14s; font-family: var(--sans);
+    }
+    .avr-toggle:hover { background: var(--bg2); }
+    .avr-toggle-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .avr-toggle-label { font-size: 0.82rem; font-weight: 600; color: var(--text); flex: 1; }
+    .avr-toggle-count { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); }
+    .avr-toggle-arrow { color: var(--muted); transition: transform 0.2s; flex-shrink: 0; }
+    .avr-toggle-arrow svg { width: 13px; height: 13px; display: block; }
+    .avr-section.open .avr-toggle-arrow { transform: rotate(180deg); }
+
+    .avr-body { display: none; border-top: 1px solid var(--bmd); }
+    .avr-section.open .avr-body { display: block; }
+
+    .avr-item {
+      display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px;
+      border-bottom: 1px solid var(--border); background: var(--surface);
+    }
+    .avr-item:last-child { border-bottom: none; }
+    .avr-num { font-family: var(--mono); font-size: 0.7rem; color: var(--subtle); min-width: 18px; padding-top: 2px; flex-shrink: 0; }
+    .avr-info { flex: 1; min-width: 0; }
+    .avr-name { font-size: 0.88rem; color: var(--ink); font-weight: 500; }
+    .avr-note { font-size: 0.78rem; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+    .avr-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+    
+    .btn-fix {
+      display: inline-flex; align-items: center; gap: 4px;
+      height: 26px; padding: 0 9px;
+      background: var(--sienna-bg); border: 1px solid rgba(122,79,42,0.25); color: var(--sienna);
+      border-radius: 5px; font-size: 0.72rem; font-weight: 600;
+      cursor: pointer; transition: all 0.14s; white-space: nowrap;
+    }
+    .btn-fix:hover { background: var(--sienna); color: #fff; }
+    .btn-fix svg { width: 10px; height: 10px; }
+
+    .avr-brand-form { display: flex; flex-direction: column; gap: 5px; align-items: flex-end; min-width: 140px; }
+    .avr-brand-inp {
+      width: 100%; height: 28px; padding: 0 8px;
+      background: var(--bg); border: 1px solid var(--bmd); border-radius: 6px;
+      font-family: var(--sans); font-size: 0.82rem; color: var(--text); outline: none;
+      transition: border-color 0.15s;
+    }
+    .avr-brand-inp:focus { border-color: var(--bdk); }
+    .avr-brand-inp::placeholder { color: var(--subtle); }
+    .avr-brand-btns { display: flex; gap: 5px; }
+    .avr-brand-ok {
+      height: 24px; padding: 0 10px;
+      background: var(--sage-bg); border: 1px solid rgba(74,103,65,0.25); color: var(--sage);
+      border-radius: 5px; font-size: 0.72rem; font-weight: 600; cursor: pointer; transition: all 0.14s;
+    }
+    .avr-brand-ok:hover { background: var(--sage); color: #fff; }
+    .avr-brand-cancel {
+      height: 24px; padding: 0 8px;
+      background: none; border: 1px solid var(--bmd); color: var(--muted);
+      border-radius: 5px; font-size: 0.72rem; cursor: pointer; transition: all 0.14s;
+    }
+    .avr-brand-cancel:hover { border-color: var(--rust); color: var(--rust); }
+    
+    .h-empty { text-align: center; padding: 60px 24px; color: var(--muted); }
+    .h-empty svg { margin: 0 auto 12px; display: block; opacity: 0.2; }
+    .h-empty p { font-size: 0.88rem; }
+    
+    .bill-card { padding: 18px 20px; margin-bottom: 10px; cursor: pointer; transition: box-shadow 0.14s, border-color 0.14s; }
+    .bill-card:hover { box-shadow: var(--sh); border-color: var(--bmd); }
+    .bc-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 7px; }
+    .bc-store { font-family: var(--serif); font-size: 1.15rem; color: var(--ink); letter-spacing: -0.02em; }
+    .bc-amount { font-family: var(--mono); font-size: 1rem; color: var(--c-fresh); font-weight: 500; }
+    .bc-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .bc-date { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); }
+    .bc-ic { font-size: 0.72rem; color: var(--muted); }
+    .bc-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px; }
+    .bc-tag { font-size: 0.64rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; border: 1px solid; }
+    .bc-actions { display: flex; gap: 7px; align-items: center; margin-top: 10px; }
+
+    /* ── MODALS ── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(12,10,8,0.42); backdrop-filter: blur(5px);
+      display: flex; align-items: center; justify-content: center; padding: 22px;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--surface); border: 1px solid var(--bmd);
+      border-radius: 16px; width: 100%; max-width: 500px; box-shadow: var(--sh-lg);
+      transform: translateY(14px) scale(0.97);
+      transition: transform 0.25s cubic-bezier(0.34,1.4,0.64,1);
+      max-height: 84vh; overflow-y: auto;
+    }
+    .modal-overlay.open .modal { transform: translateY(0) scale(1); }
+    .modal-hdr {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; background: var(--surface); z-index: 1;
+    }
+    .modal-title { font-family: var(--serif); font-size: 1.3rem; color: var(--ink); letter-spacing: -0.02em; }
+    .modal-x {
+      width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--bmd);
+      background: var(--bg); cursor: pointer; display: flex; align-items: center; justify-content: center;
+      color: var(--muted); transition: all 0.14s;
+    }
+    .modal-x:hover { background: var(--rust-bg); color: var(--rust); border-color: rgba(139,58,42,0.3); }
+    .modal-x svg { width: 12px; height: 12px; }
+    .modal-body { padding: 18px 20px; }
+    .m-item { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--border); }
+    .m-item:last-of-type { border: none; }
+    .m-name { font-size: 0.9rem; color: var(--text); font-weight: 500; }
+    .m-brand { font-size: 0.72rem; color: var(--muted); margin-top: 1px; }
+    .m-total { font-family: var(--mono); font-size: 0.88rem; color: var(--ink); font-weight: 500; text-align: right; }
+    .m-qty { font-size: 0.72rem; color: var(--muted); font-family: var(--mono); text-align: right; margin-top: 1px; }
+    .m-grand { display: flex; justify-content: space-between; align-items: baseline; margin-top: 14px; padding-top: 14px; border-top: 1.5px solid var(--bdk); }
+    .m-grand-lbl { font-family: var(--serif); font-size: 1.25rem; color: var(--ink); }
+    .m-grand-val { font-family: var(--mono); font-size: 1.4rem; color: var(--c-fresh); font-weight: 500; }
+
+    /* ── CAMERA ── */
+    .cam-area {
+      position: relative; background: var(--bg2); border-radius: 10px;
+      border: 1.5px dashed var(--bmd); overflow: hidden;
+      aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; margin-bottom: 12px;
+    }
+    #cam-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
+    #cam-canvas { display: none; }
+    #cam-preview { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
+    .cam-ph { text-align: center; color: var(--muted); }
+    .cam-ph svg { opacity: 0.25; margin: 0 auto 8px; display: block; }
+    .cam-ph p { font-size: 0.82rem; }
+    .cam-ctrls { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-cs {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+      height: var(--btn-h); padding: 0 13px;
+      background: var(--sienna); color: #fff; border: 1px solid var(--sienna); border-radius: 8px;
+      font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: opacity 0.14s; min-width: 90px;
+    }
+    .btn-cs:hover { opacity: 0.82; }
+    .btn-cs:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-cs svg { width: 13px; height: 13px; flex-shrink: 0; }
+    .btn-cu {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      height: var(--btn-h); padding: 0 13px;
+      background: var(--earth-bg); border: 1px solid rgba(107,92,78,0.25); color: var(--earth);
+      border-radius: 8px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.14s;
+    }
+    .btn-cu:hover { background: var(--earth); color: #fff; }
+    .btn-cu svg { width: 13px; height: 13px; flex-shrink: 0; }
+    .scan-ind { display: none; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--muted); margin-top: 10px; }
+    .scan-ind.show { display: flex; }
+    .si-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--c-staples); animation: sp 1.2s infinite; }
+    @keyframes sp { 0%, 100% {opacity: 1} 50% {opacity: 0.25} }
+    .scan-res { background: var(--bg); border: 1px solid var(--bmd); border-radius: 9px; padding: 14px; margin-top: 12px; display: none; }
+    .scan-res-ttl { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+    .sf { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+    .sl { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--subtle); }
+    .scan-cat-row { display: flex; align-items: center; gap: 9px; background: var(--bg); border: 1px solid var(--bmd); border-radius: 8px; padding: 8px 11px; margin-bottom: 8px; height: var(--input-h); }
+    .scan-cat-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .scan-cat-name { font-size: 0.88rem; font-weight: 500; color: var(--text2); }
+    .scan-cat-badge { margin-left: auto; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); background: var(--bg2); padding: 2px 7px; border-radius: 999px; border: 1px solid var(--bmd); }
+    .btn-add-sc {
+      width: 100%; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 6px;
+      height: var(--btn-h);
+      background: var(--sage-bg); border: 1px solid rgba(74,103,65,0.25); color: var(--sage);
+      border-radius: 8px; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.14s;
+    }
+    .btn-add-sc:hover { background: var(--sage); color: #fff; }
+    .btn-add-sc svg { width: 13px; height: 13px; }
+
+    /* ── CONFIRM MODAL ── */
+    .confirm-modal { max-width: 380px; }
+    .confirm-msg { font-size: 0.9rem; color: var(--text2); line-height: 1.6; margin-bottom: 18px; }
+    .confirm-btns { display: flex; gap: 8px; justify-content: flex-end; }
+    .btn-cancel {
+      background: none; border: 1px solid var(--bmd); border-radius: 8px;
+      font-size: 0.86rem; color: var(--muted); height: var(--btn-h); padding: 0 16px; cursor: pointer; transition: all 0.14s;
+    }
+    .btn-cancel:hover { border-color: var(--bdk); color: var(--text); }
+    .btn-confirm-del {
+      background: var(--rust); color: #fff; border: none; border-radius: 8px;
+      font-size: 0.86rem; font-weight: 500; height: var(--btn-h); padding: 0 16px; cursor: pointer; transition: opacity 0.14s;
+    }
+    .btn-confirm-del:hover { opacity: 0.85; }
+
+    /* ── TOAST ── */
+    /* UX Note: The white-space and text-align properties were updated 
+      to allow multi-line wrapping so the user can read the entire sanitized error message 
+      instead of it being cut off. 
+    */
+    #toast {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: var(--ink); border-radius: 10px; padding: 11px 18px;
+      font-size: 0.84rem; color: #ede8e1; 
+      white-space: normal; 
+      text-align: center;  
+      line-height: 1.4;
+      display: flex; align-items: center; gap: 8px; z-index: 400;
+      opacity: 0; max-width: calc(100vw - 32px);
+      transition: all 0.3s cubic-bezier(0.34,1.4,0.64,1); pointer-events: none;
+      box-shadow: var(--sh);
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .t-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spin { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+    .spin.dark { border-color: rgba(0,0,0,0.12); border-top-color: var(--earth); }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--subtle); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-l">
+    <span class="nav-logo">Slate</span>
+    <span class="nav-badge">Shopping</span>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="list">List</button>
+    <button class="tab-btn" data-tab="history">Purchases</button>
+  </div>
+</nav>
+
+<main>
+  <div class="page active" id="page-list">
+    <div class="ph">
+      <h1 class="ph-title">Shopping List</h1>
+      <p class="ph-sub">Add items · auto-categorise · verify &amp; save</p>
+    </div>
+
+    <div class="card add-card">
+      <div class="add-row1">
+        <div class="fg">
+          <label class="lbl">Product Name</label>
+          <input type="text" id="inp-name" placeholder="e.g. Whole Milk" autocomplete="off">
+        </div>
+        <div class="fg">
+          <label class="lbl">Brand</label>
+          <input type="text" id="inp-brand" placeholder="e.g. Amul" autocomplete="off">
+        </div>
+      </div>
+      <div class="add-row2">
+        <div class="add-row2-left">
+          <div class="fg">
+            <label class="lbl">Unit Price (₹)</label>
+            <input type="number" id="inp-price" placeholder="0.00" min="0" step="0.01">
+          </div>
+          <div class="fg">
+            <label class="lbl">Qty</label>
+            <div class="stepper" id="stepper-wrap">
+              <button class="s-btn" id="qty-minus" type="button">−</button>
+              <input class="s-inp" id="qty-inp" type="number" value="1" min="0.5" step="0.5">
+              <button class="s-btn" id="qty-plus" type="button">+</button>
+            </div>
+          </div>
+        </div>
+        <div class="fg">
+          <label class="lbl">Category</label>
+          <div class="cat-wrap">
+            <div class="cat-swatch" id="cat-swatch" style="background:var(--c-fresh);"></div>
+            <select class="cat-sel" id="cat-select">
+              <option value="fresh">Fresh & Dairy</option>
+              <option value="staples">Kitchen Staples</option>
+              <option value="spices">Spices & Masalas</option>
+              <option value="rte">Ready to Eat</option>
+              <option value="drinks">Beverages</option>
+              <option value="snacks">Sweets & Snacks</option>
+              <option value="frozen">Frozen & Chilled</option>
+              <option value="personal">Personal Care</option>
+              <option value="home">Cleaning & Home</option>
+              <option value="household">Utensils & General</option>
+            </select>
+            <div class="cat-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+          </div>
+        </div>
+      </div>
+      <div class="add-actions">
+        <label class="btn-secondary" style="cursor:pointer; padding:0 12px;" title="Import .json cart">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Import
+          <input type="file" id="file-import-cart" accept=".json" style="display:none;">
+        </label>
+        <button class="btn-secondary" id="btn-open-cam">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          Scan
+        </button>
+        <button class="btn-primary" id="btn-add">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Item
+        </button>
+      </div>
+    </div>
+
+    <div class="list-bar">
+      <span class="list-lbl">Items</span>
+      <div class="list-r">
+        <button class="btn-sm btn-sm-rust" id="btn-clear-top" style="display:none;">
+          <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H15M3 6H21M19 6L18.2987 16.5193C18.1935 18.0975 18.1409 18.8867 17.8 19.485C17.4999 20.0118 17.0472 20.4353 16.5017 20.6997C15.882 21 15.0911 21 13.5093 21H10.4907C8.90891 21 8.11803 21 7.49834 20.6997C6.95276 20.4353 6.50009 20.0118 6.19998 19.485C5.85911 18.8867 5.8065 18.0975 5.70129 16.5193L5 6M10 10.5V15.5M14 10.5V15.5"/></svg>
+          Clear list
+        </button>
+      </div>
+    </div>
+
+    <div class="items-list" id="items-list">
+      <div class="empty-state" id="empty-state">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        <p>No items yet. Add something above.</p>
+      </div>
+    </div>
+
+    <div class="summary-wrap" id="summary-wrap" style="display:none;">
+      <div class="card sum-card">
+        <div class="sum-grid">
+          <div>
+            <div id="sum-lines"></div>
+            <div class="sum-total">
+              <span class="sum-total-lbl">Grand Total</span>
+              <span class="sum-total-val" id="grand-total">₹0.00</span>
+            </div>
+          </div>
+          <div class="save-actions">
+            <div class="save-meta">
+              <div class="fg">
+                <label class="lbl">Store / Trip Name</label>
+                <input type="text" id="inp-store" placeholder="e.g. DMart Weekly">
+              </div>
+              <div class="fg">
+                <label class="lbl">Your Name (optional)</label>
+                <input type="text" id="inp-buyer" placeholder="Mohammed Azeez">
+              </div>
+            </div>
+            <div class="avr-wrap" id="avr"></div>
+            <button class="btn-check state-check" id="btn-check">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              Check Cart
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page" id="page-history">
+    <div class="ph">
+      <h1 class="ph-title">Purchases</h1>
+      <p class="ph-sub">All saved shopping trips</p>
+    </div>
+    
+    <div class="card" style="padding:14px; margin-bottom:16px; display:flex; gap:10px; align-items:center;">
+      <label class="lbl" style="margin:0; white-space:nowrap;">Sync Code:</label>
+      <input type="text" id="inp-sync" placeholder="e.g. secret123" style="height:32px;">
+      <button class="btn-sm btn-sm-earth" onclick="updateSyncCode()">Load Cloud</button>
+    </div>
+
+    <div id="history-list"></div>
+  </div>
+</main>
+
+<div class="modal-overlay" id="cam-modal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-title">Scan Product</span>
+      <button class="modal-x" id="cam-close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="cam-area">
+        <video id="cam-video" autoplay playsinline muted></video>
+        <canvas id="cam-canvas"></canvas>
+        <img id="cam-preview" alt="">
+        <div class="cam-ph" id="cam-ph">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <p>Capture or upload a product image</p>
+        </div>
+      </div>
+      <div class="cam-ctrls">
+        <button class="btn-cs" id="btn-cam-start">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+          Open Camera
+        </button>
+        <button class="btn-cs" id="btn-capture" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          Capture Image
+        </button>
+        <label class="btn-cu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload Image
+          <input type="file" id="file-upload" accept="image/*" style="display:none;">
+        </label>
+      </div>
+      <div class="scan-ind" id="scan-ind"><div class="si-dot"></div><span>Scanning with AI Vision…</span></div>
+      <div class="scan-res" id="scan-res">
+        <div class="scan-res-ttl">Detected — edit if needed</div>
+        <div class="sf"><label class="sl">Product Name</label><input type="text" id="sc-name" placeholder="—"></div>
+        <div class="sf"><label class="sl">Brand</label><input type="text" id="sc-brand" placeholder="—"></div>
+        <div class="sf" style="display:grid;grid-template-columns:1fr 96px;gap:0 10px;align-items:end;">
+          <div>
+            <label class="sl">Unit Price (₹)</label>
+            <input type="number" id="sc-price" placeholder="0.00" step="0.01">
+          </div>
+          <div>
+            <label class="sl">Qty</label>
+            <div class="stepper">
+              <button class="s-btn" id="sc-qty-minus" type="button">−</button>
+              <input class="s-inp" id="sc-qty-inp" type="number" value="1" min="0.5" step="0.5">
+              <button class="s-btn" id="sc-qty-plus" type="button">+</button>
+            </div>
+          </div>
+        </div>
+        <label class="sl" style="margin-bottom:5px;display:block;">Category (AI assigned)</label>
+        <div class="scan-cat-row">
+          <div class="scan-cat-dot" id="sc-cat-dot" style="background:var(--c-fresh);"></div>
+          <span class="scan-cat-name" id="sc-cat-name">Fresh</span>
+          <span class="scan-cat-badge">Auto</span>
+        </div>
+        <button class="btn-add-sc" id="btn-add-sc">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add to List
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="bill-modal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-title" id="bm-title">Purchase</span>
+      <button class="modal-x" id="bm-close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body" id="bm-body"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal confirm-modal">
+    <div class="modal-hdr">
+      <span class="modal-title" id="confirm-title">Confirm</span>
+      <button class="modal-x" id="confirm-close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <p class="confirm-msg" id="confirm-msg"></p>
+      <div class="confirm-btns">
+        <button class="btn-cancel" id="confirm-cancel">Cancel</button>
+        <button class="btn-confirm-del" id="confirm-ok">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"><div class="t-dot" id="t-dot"></div><span id="t-msg">Done</span></div>
+
+<script>
+// ─── CATEGORIES ───────────────────────────
+/*
+  Data Architecture Note:
+  Categories expanded from basic generics to 10 specific classifications.
+  Reason: Real-world testing revealed AI was misclassifying items like "Mosquito Bat" and "Toothpaste"
+  into generic 'fresh' or 'home' due to a lack of granular options.
+*/
+const CATS = {
+  fresh:     { label:'Fresh & Dairy',      hex:'#2d7a3e' },
+  staples:   { label:'Kitchen Staples',    hex:'#b06a1a' },
+  spices:    { label:'Spices & Masalas',   hex:'#d9480f' }, 
+  rte:       { label:'Ready to Eat',       hex:'#6b3fa0' },
+  drinks:    { label:'Beverages',          hex:'#1a6fa8' },
+  snacks:    { label:'Sweets & Snacks',    hex:'#b83050' },
+  frozen:    { label:'Frozen & Chilled',   hex:'#1a7a8a' },
+  personal:  { label:'Personal Care',      hex:'#5c1a8a' }, 
+  home:      { label:'Cleaning & Home',    hex:'#6b6560' },
+  household: { label:'Utensils & General', hex:'#495057' }  
+};
+
+const CAT_KEYWORDS = {
+  frozen:    /\bfrozen\b|ice[\s-]cream|kulfi|popsicle|cold\s*cut|\bpeas\b(?!.*split)|\bnuggets\b/i,
+  drinks:    /\bjuice\b|\bcola\b|\bpepsi\b|\bcoke\b|\bsprite\b|\bfanta\b|\bsoda\b|\btea\b|\bchai\b|\bcoffee\b|\blassi\b|\bchaas\b|\blemonade\b|energy\s*drink|\bbeer\b|\bwine\b|\balcohol\b/i,
+  snacks:    /\bchips\b|namkeen|bhujia|mixture|\bfarsan\b|\bwafer\b|popcorn|chocolate|candy|\bmithai\b|\bcake\b|\bpastry\b|\bcookie\b|\bbiscuit\b|\bcashew\b|\balmond\b|\bpeanut\b|\braisin\b|\bfig\b|\banjeer\b|dry\s*fruit|\bnut\b/i,
+  rte:       /\bnoodle\b|\bpasta\b|\bmaggi\b|instant\s*noodle|ready\s*to\s*eat|\bcereal\b|\bporridge\b|baby\s*food|\bformula\b|\boats\b|\bupma\b|\bdosa\s*batter\b|\bidli\s*batter\b/i,
+  spices:    /\bmasala\b|spice\s*mix|\bcumin\b|\bjeera\b|turmeric|\bhaldi\b|coriander|\bdhaniya\b|\bpepper\b|\bchili\b|\bmirch\b|\belaichi\b|\bcardamom\b|\bclove\b|\bcinnamon\b|\baamchur\b|\bgaram\b|\bpowder\b/i,
+  personal:  /shampoo|conditioner|toothpaste|toothbrush|face\s*wash|sanitizer|body\s*wash|\bsoap\b|\blotion\b|\bcream\b|hair\s*oil|\bdeo\b|deodorant|roll\s*on|perfume|powder|razor|blade|shave|\bpad\b|napkin/i,
+  home:      /detergent|disinfect|floor\s*cleaner|toilet\s*cleaner|tissue|bin\s*bag|garbage\s*bag|\bpesticide\b|\bphenyl\b|\bharpic\b|\bvim\b|fabric\s*care|liquid\s*wash|repellent/i,
+  household: /\butensil\b|\bvessel\b|\bpan\b|\bbroom\b|\bmop\b|\bsponge\b|\bscrub\b|\bcandle\b|mosquito\s*bat|\bbat\b|\bbucket\b|\bmug\b|strainer|cleaner|basket|garland|band|clip/i,
+  staples:   /\brice\b|\bwheat\b|\bflour\b|\batta\b|\bmaida\b|\bsuji\b|semolina|\boil\b|\bghee\b|\bsalt\b|\bsugar\b|\bketchup\b|\bpickle\b|\bachaar\b|\bvinegar\b|soy\s*sauce|\bsauce\b|\bpaste\b|\bgrain\b|\bseed\b|\bdal\b|\blentil\b|\btoor\b|\bmoong\b|\burad\b|\bchana\b|\bbesan\b|\bpoha\b/i,
+  fresh:     /\bmilk\b|curd|\bdahi\b|\byogurt\b|\bpaneer\b|\bcheese\b|\bbutter\b|\begg\b|\bchicken\b|\bmutton\b|\bfish\b|\bvegetable\b|\bfruit\b|\bbread\b|\broti\b|\bnaan\b|\bpav\b|\bbun\b|spinach|\btomato\b|\bonion\b|\bpotato\b|\baloo\b|\bcarrot\b|\bapple\b|\bbanana\b|\bmango\b|\borange\b/i
+};
+
+function classifyByKeyword(name) {
+  const t = name.toLowerCase();
+  for (const [k, rx] of Object.entries(CAT_KEYWORDS)) { if (rx.test(t)) return k; }
+  return 'fresh';
+}
+
+// ─── STATE ───────────────────────────────
+let items = [];
+let selCat = 'fresh';
+let userForcedCat = false;
+let pendingScannedCat = 'fresh';
+let camStream = null;
+let toastTimer = null;
+let confirmCallback = null;
+let cartVerified = false;
+
+// ─── PERSIST ─────────────────────────────
+function saveState() {
+  try {
+    localStorage.setItem('kaz_items', JSON.stringify(items));
+    localStorage.setItem('kaz_store', $('inp-store').value);
+    localStorage.setItem('kaz_buyer', $('inp-buyer').value);
+  } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const s = localStorage.getItem('kaz_items');
+    if (s) { items = JSON.parse(s); reRenderList(); refreshSummary(); }
+    const store = localStorage.getItem('kaz_store');
+    const buyer = localStorage.getItem('kaz_buyer');
+    if (store) $('inp-store').value = store;
+    if (buyer) $('inp-buyer').value = buyer;
+  } catch(e) { items = []; }
+}
+
+// ─── UTILS ───────────────────────────────
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const fmt = n => '₹' + Number(n).toFixed(2);
+const fmtQ = q => q % 1 === 0 ? String(q) : Number(q).toFixed(1);
+const parseQ = v => { const n = parseFloat(v); return isNaN(n) || n < 0.5 ? 0.5 : Math.round(n * 10) / 10; };
+
+function toast(msg, color) {
+  $('t-msg').textContent = msg;
+  $('t-dot').style.background = color || CATS.fresh.hex;
+  $('toast').classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2800);
+}
+
+/*
+  UX Error Sanitizer: 
+  Intercepts raw developer error strings (e.g., 'JSON.parse: end of data at line 1 column 546') 
+  and translates them into human-readable instructions so the end user understands the issue.
+*/
+function friendlyError(errMsg) {
+  const msg = String(errMsg || '').toLowerCase();
+  
+  if (msg.includes('json.parse') || msg.includes('end of data')) return "AI response was interrupted. Please try again.";
+  if (msg.includes('quota') || msg.includes('429')) return "Too many requests. Please wait 60 seconds.";
+  if (msg.includes('fetch') || msg.includes('network')) return "Network error. Check your connection.";
+  if (msg.includes('api key')) return "API Key is missing or invalid.";
+  if (msg.includes('timeout')) return "The AI took too long to respond. Try again.";
+  
+  return msg.length > 50 ? errMsg.slice(0, 47) + '...' : errMsg;
+}
+
+// ─── CATEGORY SELECT ─────────────────────
+function setFormCat(k) {
+  selCat = k;
+  $('cat-select').value = k;
+  $('cat-swatch').style.background = CATS[k]?.hex || CATS.fresh.hex;
+}
+
+$('cat-select').addEventListener('change', () => { 
+  setFormCat($('cat-select').value); 
+  userForcedCat = true; 
+  markDirty(); 
+});
+
+let classifyTimer = null;
+$('inp-name').addEventListener('input', () => {
+  clearTimeout(classifyTimer);
+  classifyTimer = setTimeout(() => {
+    if (userForcedCat) return;
+    const n = $('inp-name').value.trim(), b = $('inp-brand').value.trim();
+    if (n.length > 2) setFormCat(classifyByKeyword(n));
+  }, 300);
+});
+
+// ─── TABS ─────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    $('page-' + btn.dataset.tab).classList.add('active');
+    if (btn.dataset.tab === 'history') renderHistory();
+  });
+});
+
+// ─── QTY STEPPER ─────────────────────────
+function stepQty(current, dir) {
+  const v = parseQ(current);
+  if (dir > 0) {
+    if (v < 2) return Math.round((v + 0.5) * 10) / 10;
+    return Math.round((v + 1) * 10) / 10;
+  } else {
+    if (v > 2) return Math.round((v - 1) * 10) / 10;
+    if (v > 0.5) return Math.round((v - 0.5) * 10) / 10;
+    return 0.5;
+  }
+}
+
+const qtyInp = $('qty-inp');
+$('qty-minus').addEventListener('click', () => { qtyInp.value = fmtQ(stepQty(qtyInp.value, -1)); });
+$('qty-plus').addEventListener('click',  () => { qtyInp.value = fmtQ(stepQty(qtyInp.value,  1)); });
+qtyInp.addEventListener('change', () => { qtyInp.value = fmtQ(parseQ(qtyInp.value)); });
+qtyInp.addEventListener('blur',   () => { if (!qtyInp.value) qtyInp.value = '1'; qtyInp.value = fmtQ(parseQ(qtyInp.value)); });
+
+// ─── ADD ITEM ─────────────────────────────
+function doAdd(name, brand, price, q, cat) {
+  name  = (name  !== undefined ? name  : $('inp-name').value).trim();
+  brand = (brand !== undefined ? brand : $('inp-brand').value).trim();
+  price = price  !== undefined ? price : parseFloat($('inp-price').value);
+  q     = q      !== undefined ? q     : parseQ(qtyInp.value);
+  cat   = cat    !== undefined ? cat   : selCat;
+
+  if (!name)        { $('inp-name').focus();  toast('Enter a product name', CATS.staples.hex); return false; }
+  if (!(price > 0)) { $('inp-price').focus(); toast('Enter a valid price',  CATS.staples.hex); return false; }
+
+  const item = {
+    id: Date.now() + Math.random().toString(36).slice(2,5),
+    name, brand: brand || '—', qty: q, unitPrice: price, cat,
+    total: +(q * price).toFixed(2)
+  };
+  
+  items.push(item);
+  reRenderList(); refreshSummary(); markDirty(); saveState();
+  toast('"' + name + '" added', CATS[cat]?.hex);
+
+  $('inp-name').value = ''; $('inp-brand').value = ''; $('inp-price').value = '';
+  qtyInp.value = '1';
+  setFormCat('fresh');
+  userForcedCat = false;
+  $('inp-name').focus();
+  return true;
+}
+
+$('btn-add').addEventListener('click', () => doAdd());
+['inp-name','inp-brand','inp-price'].forEach(id => {
+  $(id).addEventListener('keydown', e => { if (e.key === 'Enter') doAdd(); });
+});
+
+// ─── RENDER LIST ─────────────────────────
+function reRenderList() {
+  const list = $('items-list');
+  list.querySelectorAll('.item-row,.cat-group-header').forEach(el => el.remove());
+  if (!items.length) { $('empty-state').style.display = ''; return; }
+  $('empty-state').style.display = 'none';
+
+  const order = Object.keys(CATS);
+  const groups = {};
+  order.forEach(k => { groups[k] = []; });
+  items.forEach(item => { (groups[item.cat] || groups.fresh).push(item); });
+
+  order.forEach(catKey => {
+    const grp = groups[catKey];
+    if (!grp.length) return;
+    const cat = CATS[catKey];
+
+    const hdr = document.createElement('div');
+    hdr.className = 'cat-group-header';
+    hdr.innerHTML = `<div class="cgh-dot" style="background:${cat.hex};"></div><span class="cgh-label" style="color:${cat.hex};">${cat.label}</span>`;
+    list.appendChild(hdr);
+
+    grp.forEach((item, idx) => {
+      const serial = idx + 1;
+      const row = document.createElement('div');
+      row.className = 'item-row'; row.dataset.id = item.id;
+      row.innerHTML = `
+        <span class="i-serial">${serial}</span>
+        <div><div class="i-name">${esc(item.name)}</div><div class="i-brand">${esc(item.brand)}</div></div>
+        <div class="i-price-col"><div class="i-unit">${fmt(item.unitPrice)}</div><div class="i-unit-sub">/ unit</div></div>
+        <div class="i-qty-ctrl">
+          <button class="iq-btn" data-action="minus" data-id="${item.id}">−</button>
+          <span class="iq-num">${fmtQ(item.qty)}</span>
+          <button class="iq-btn" data-action="plus"  data-id="${item.id}">+</button>
+        </div>
+        <div class="i-total">${fmt(item.total)}</div>
+        <button class="btn-rm" data-id="${item.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;
+      list.appendChild(row);
+    });
+  });
+}
+
+$('items-list').addEventListener('click', e => {
+  const btn = e.target.closest('[data-action]');
+  const rm  = e.target.closest('.btn-rm');
+  
+  if (btn) {
+    const item = items.find(i => i.id === btn.dataset.id); if (!item) return;
+    item.qty = stepQty(item.qty, btn.dataset.action === 'plus' ? 1 : -1);
+    item.total = +(item.qty * item.unitPrice).toFixed(2);
+    reRenderList(); refreshSummary(); markDirty(); saveState();
+  }
+  if (rm) {
+    items = items.filter(i => i.id !== rm.dataset.id);
+    reRenderList(); refreshSummary(); markDirty(); saveState();
+  }
+});
+
+// ─── SUMMARY ─────────────────────────────
+function refreshSummary() {
+  const total = items.reduce((s, i) => s + i.total, 0);
+  $('grand-total').textContent = fmt(total);
+  $('btn-clear-top').style.display = items.length ? 'inline-flex' : 'none';
+  $('summary-wrap').style.display  = items.length ? 'block' : 'none';
+
+  const catTotals = {};
+  items.forEach(i => { catTotals[i.cat] = (catTotals[i.cat] || 0) + i.total; });
+  
+  let html = `<div class="sum-line"><span>Total items</span><span class="sum-val">${items.length}</span></div>`;
+  Object.entries(catTotals).forEach(([k, v]) => {
+    const cat = CATS[k]; if (!cat) return;
+    html += `<div class="sum-line">
+      <span style="display:flex;align-items:center;gap:7px;">
+        <span style="width:8px;height:8px;border-radius:50%;background:${cat.hex};display:inline-block;flex-shrink:0;"></span>
+        ${cat.label}
+      </span>
+      <span class="sum-val">${fmt(v)}</span>
+    </div>`;
+  });
+  $('sum-lines').innerHTML = html;
+}
+
+// ─── CONFIRM MODAL ────────────────────────
+function showConfirm(title, msg, okLabel, onOk) {
+  $('confirm-title').textContent = title;
+  $('confirm-msg').textContent   = msg;
+  $('confirm-ok').textContent    = okLabel;
+  confirmCallback = onOk;
+  $('confirm-modal').classList.add('open');
+}
+
+$('confirm-cancel').addEventListener('click', () => $('confirm-modal').classList.remove('open'));
+$('confirm-close').addEventListener('click',  () => $('confirm-modal').classList.remove('open'));
+$('confirm-ok').addEventListener('click', () => {
+  $('confirm-modal').classList.remove('open');
+  if (confirmCallback) { confirmCallback(); confirmCallback = null; }
+});
+$('confirm-modal').addEventListener('click', e => { if (e.target === $('confirm-modal')) $('confirm-modal').classList.remove('open'); });
+
+$('btn-clear-top').addEventListener('click', () => {
+  showConfirm('Clear list',
+    'Remove all ' + items.length + ' item' + (items.length !== 1 ? 's' : '') + ' from your list? This cannot be undone.',
+    'Yes, clear',
+    () => { 
+      items = []; cartVerified = false; 
+      reRenderList(); refreshSummary(); resetCheckBtn(); saveState(); 
+      $('avr').classList.remove('show'); $('avr').innerHTML = ''; 
+      toast('List cleared', CATS.home.hex); 
+    }
+  );
+});
+
+// ─── CART CHECK & AI VERIFY ──────────────────
+function markDirty() {
+  if (cartVerified) {
+    cartVerified = false;
+    resetCheckBtn();
+    $('avr').classList.remove('show');
+    $('avr').innerHTML = '';
+  }
+}
+
+function resetCheckBtn() {
+  const btn = $('btn-check');
+  btn.className = 'btn-check state-check';
+  btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Check Cart`;
+}
+
+let avrData = { ok: [], issues: [] };
+
+function applyFix(itemId, field, value) {
+  const item = items.find(i => i.id === itemId);
+  if (!item) return;
+  if (field === 'cat') item.cat = value;
+  else if (field === 'brand') item.brand = value || '—';
+  item.total = +(item.qty * item.unitPrice).toFixed(2);
+  
+  reRenderList(); refreshSummary(); saveState();
+  toast('Fixed!', CATS.fresh.hex);
+  
+  const idx = avrData.issues.findIndex(x => x.id === itemId);
+  if (idx !== -1) {
+    const moved = avrData.issues.splice(idx, 1)[0];
+    avrData.ok.push({ id: moved.id, name: moved.name });
+    rerenderAVRSections();
+  }
+}
+
+function showBrandInput(itemId) {
+  const row = document.querySelector(`.avr-item[data-id="${itemId}"]`);
+  if (!row) return;
+  const actions = row.querySelector('.avr-actions');
+  if (actions.querySelector('.avr-brand-form')) return;
+  
+  actions.innerHTML = `
+    <div class="avr-brand-form">
+      <input class="avr-brand-inp" id="avr-inp-${itemId}" type="text" placeholder="Brand name…" autocomplete="off">
+      <div class="avr-brand-btns">
+        <button class="avr-brand-ok" onclick="confirmBrand('${itemId}')">OK</button>
+        <button class="avr-brand-cancel" onclick="rerenderAVRSections()">✕</button>
+      </div>
+    </div>`;
+    
+  const inp = document.getElementById(`avr-inp-${itemId}`);
+  if (inp) {
+    inp.focus();
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') confirmBrand(itemId);
+      if (e.key === 'Escape') rerenderAVRSections();
+    });
+  }
+}
+
+async function confirmBrand(itemId) {
+  const inp = document.getElementById(`avr-inp-${itemId}`);
+  if (!inp) return;
+  const val = inp.value.trim();
+  if (!val) { applyFix(itemId, 'brand', '—'); return; }
+
+  const form = inp.closest('.avr-brand-form');
+  const btns = form.querySelector('.avr-brand-btns');
+  inp.disabled = true;
+  btns.innerHTML = `<span style="font-size:0.72rem;color:var(--muted);display:flex;align-items:center;gap:5px;"><span class="spin dark" style="width:11px;height:11px;border-width:1.5px;"></span>Checking…</span>`;
+
+  const issue = avrData.issues.find(x => x.id === itemId);
+  const productName = issue ? issue.name : '';
+
+  try {
+    const res = await fetch('/api/gemini', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'gemini-2.5-flash',
+        max_tokens: 500,
+        system: `You are a grocery brand validator. The user is entering a brand name for a grocery product.
+
+Given a product name and a brand name, decide if the brand is plausible for a grocery shopping list.
+Return ok true if: the brand sells food, beverages, or household/personal care products AND could plausibly make this product.
+Return ok false if: the brand is from a completely different industry (phones, cars, tech, clothing), is gibberish/random characters, or is clearly a typo.
+
+Examples where ok is false: Product "Aloo Bhujia" brand "Oppo" — Oppo makes phones not food. Product "Milk" brand "Samsung" — tech brand. Product "Bread" brand "xkcd" — nonsense.
+Examples where ok is true: Product "Milk" brand "Amul". Product "Chips" brand "Lays". Product "Tea" brand "Tata".
+
+You MUST respond with ONLY a raw JSON object. No markdown, no backticks, no explanation. Start with { end with }.
+If ok, respond: {"ok":true}
+If not ok, respond: {"ok":false,"reason":"one short sentence"}`,
+        messages: [{ role: 'user', content: `Product: "${productName}" — Brand entered: "${val}"` }]
+      })
+    });
+    
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    
+    const rawText = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('').trim();
+    const s = rawText.indexOf('{'), e2 = rawText.lastIndexOf('}');
+    const result = s !== -1 && e2 !== -1 ? JSON.parse(rawText.slice(s, e2 + 1)) : { ok: true }; 
+
+    if (result.ok) {
+      applyFix(itemId, 'brand', val);
+    } else {
+      inp.disabled = false;
+      inp.style.borderColor = 'var(--rust)';
+      btns.innerHTML = `
+        <button class="avr-brand-ok" onclick="forceApplyBrand('${itemId}')">Keep anyway</button>
+        <button class="avr-brand-cancel" onclick="resetBrandInput('${itemId}')">Re-edit</button>`;
+        
+      const existing = form.querySelector('.avr-brand-warn');
+      if (!existing) {
+        const warn = document.createElement('div');
+        warn.className = 'avr-brand-warn';
+        warn.style.cssText = 'font-size:0.72rem;color:var(--rust);margin-top:2px;line-height:1.4;';
+        warn.textContent = result.reason || 'That doesn\'t look like a valid brand.';
+        form.insertBefore(warn, btns);
+      }
+    }
+  } catch(err) {
+    inp.disabled = false;
+    applyFix(itemId, 'brand', val);
+  }
+}
+
+function forceApplyBrand(itemId) {
+  const inp = document.getElementById(`avr-inp-${itemId}`);
+  const val = inp ? inp.value.trim() : '';
+  applyFix(itemId, 'brand', val || '—');
+}
+
+function resetBrandInput(itemId) {
+  const inp = document.getElementById(`avr-inp-${itemId}`);
+  if (inp) {
+    inp.disabled = false;
+    inp.style.borderColor = '';
+    inp.focus();
+    inp.select();
+  }
+  const form = inp ? inp.closest('.avr-brand-form') : null;
+  if (form) {
+    const warn = form.querySelector('.avr-brand-warn');
+    if (warn) warn.remove();
+    const btns = form.querySelector('.avr-brand-btns');
+    if (btns) btns.innerHTML = `
+      <button class="avr-brand-ok" onclick="confirmBrand('${itemId}')">OK</button>
+      <button class="avr-brand-cancel" onclick="rerenderAVRSections()">✕</button>`;
+  }
+}
+
+function rerenderAVRSections() {
+  const avr = $('avr');
+  avr.innerHTML = buildAVRHTML(avrData);
+  avr.classList.add('show');
+}
+
+function buildAVRHTML(parsed) {
+  const ok     = parsed.ok     || [];
+  const issues = parsed.issues || [];
+
+  const uniqueIssueProducts = [...new Set(issues.map(x => x.id))].length;
+  const uniqueOkProducts    = [...new Set(ok.map(x => x.id))].length;
+
+  let html = '';
+
+  if (issues.length) {
+    html += `<div class="avr-section open">
+      <button class="avr-toggle" onclick="this.closest('.avr-section').classList.toggle('open')">
+        <div class="avr-toggle-dot" style="background:${CATS.staples.hex};"></div>
+        <span class="avr-toggle-label">Needs attention</span>
+        <span class="avr-toggle-count">${uniqueIssueProducts} product${uniqueIssueProducts!==1?'s':''}</span>
+        <span class="avr-toggle-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+      </button>
+      <div class="avr-body">`;
+      
+    issues.forEach((it, i) => {
+      let actionHTML = '';
+      if (it.issue_type === 'cat') {
+        actionHTML = `<button class="btn-fix" onclick="applyFix('${esc(it.id)}','cat','${esc(it.fix_value)}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+          ${esc(it.fix_label)}
+        </button>`;
+      } else if (it.issue_type === 'brand') {
+        actionHTML = `<button class="btn-fix" onclick="showBrandInput('${esc(it.id)}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Enter brand
+        </button>`;
+      }
+      
+      html += `<div class="avr-item" data-id="${esc(it.id)}">
+        <span class="avr-num">${i+1}</span>
+        <div class="avr-info">
+          <div class="avr-name">${esc(it.name)}</div>
+          <div class="avr-note">${esc(it.problem)}</div>
+        </div>
+        <div class="avr-actions">${actionHTML}</div>
+      </div>`;
+    });
+    html += `</div></div>`;
+  }
+
+  if (ok.length) {
+    html += `<div class="avr-section${issues.length ? '' : ' open'}">
+      <button class="avr-toggle" onclick="this.closest('.avr-section').classList.toggle('open')">
+        <div class="avr-toggle-dot" style="background:${CATS.fresh.hex};"></div>
+        <span class="avr-toggle-label">Looks good</span>
+        <span class="avr-toggle-count">${uniqueOkProducts} product${uniqueOkProducts!==1?'s':''}</span>
+        <span class="avr-toggle-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+      </button>
+      <div class="avr-body">`;
+      
+    ok.forEach((it, i) => {
+      html += `<div class="avr-item">
+        <span class="avr-num">${i+1}</span>
+        <div class="avr-info"><div class="avr-name">${esc(it.name)}</div></div>
+        <div class="avr-actions"><span style="font-size:0.72rem;color:var(--sage);font-weight:600;">✓ OK</span></div>
+      </div>`;
+    });
+    html += `</div></div>`;
+  }
+  return html;
+}
+
+/*
+  AI Request Protocol: 'Silent Approval'
+  Reason: Sending an array of 50+ perfectly fine items caused the AI response to exceed token limits 
+  and return incomplete, unparseable JSON (`end of data when ',' or ']' was expected`).
+  Solution: The system prompt now strictly enforces returning ONLY the problematic items. 
+  The frontend infers that any item missing from the AI's "issue" list is automatically verified as OK. 
+*/
+$('btn-check').addEventListener('click', async () => {
+  if (!items.length) { toast('Add items first', CATS.staples.hex); return; }
+  if (cartVerified) { doSavePurchase(); return; }
+
+  const btn = $('btn-check');
+  btn.className = 'btn-check state-checking';
+  btn.innerHTML = `<span class="spin dark"></span> Verifying…`;
+  btn.disabled = true;
+  $('avr').classList.remove('show');
+
+  const cartDesc = items.map((item, i) =>
+    `${i+1}|${item.id}|"${item.name}"|brand:"${item.brand}"|cat:${item.cat}|price:₹${item.unitPrice}`
+  ).join('\n');
+
+  try {
+    const res = await fetch('/api/gemini', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'gemini-2.5-flash', 
+        max_tokens: 2000,
+        system:`You are a grocery cart verifier. Items are given as: index|id|name|brand|category|price
+
+Check each item for ONLY these two issues:
+1. WRONG CATEGORY — category does not match the product. Use issue_type "cat" and set fix_value to the correct key.
+2. MISSING BRAND — brand is exactly "—" or empty. Use issue_type "brand" and set fix_value to an empty string.
+
+CRITICAL RULES:
+- DO NOT return an "ok" array. Do not return items that have no issues.
+- ONLY return the "issues" array. If there are no issues, return {"issues": []}
+- Valid category keys: fresh, staples, spices, rte, drinks, snacks, frozen, personal, home, household
+
+Format your response EXACTLY like this (valid JSON only):
+{"issues":[{"id":"...","name":"...","issue_type":"cat","problem":"short reason","fix_value":"category key","fix_label":"button text"}]}`,
+        messages:[{ role:'user', content:`Verify this cart:\n${cartDesc}` }]
+      })
+    });
+
+    const data = await res.json();
+    btn.disabled = false;
+    if (data.error) throw new Error(data.error.message);
+
+    const rawText = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').trim();
+
+    const start = rawText.indexOf('{');
+    const end   = rawText.lastIndexOf('}');
+    if (start === -1 || end === -1) throw new Error('No JSON object in response');
+    const parsed = JSON.parse(rawText.slice(start, end + 1));
+
+    const seenIds = new Set();
+    const deduped = [];
+    (parsed.issues||[]).filter(x=>x.issue_type==='cat').forEach(x=>{ if(!seenIds.has(x.id)){seenIds.add(x.id);deduped.push(x);} });
+    (parsed.issues||[]).filter(x=>x.issue_type==='brand').forEach(x=>{ if(!seenIds.has(x.id)){seenIds.add(x.id);deduped.push(x);} });
+
+    const issueIds = new Set(deduped.map(i => i.id));
+    const okItems = items
+      .filter(item => !issueIds.has(item.id))
+      .map(item => ({ id: item.id, name: item.name }));
+
+    avrData = { ok: okItems, issues: deduped };
+    rerenderAVRSections();
+    
+    cartVerified = true;
+    btn.className = 'btn-check state-save';
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Purchase`;
+
+    const warnCount = deduped.length;
+    if (warnCount > 0) toast(warnCount + ' issue' + (warnCount>1?'s':'') + ' found — review before saving', CATS.staples.hex);
+    else toast('All clear — ready to save', CATS.fresh.hex);
+
+  } catch(err) {
+    btn.disabled = false;
+    console.error('Cart check error:', err.message);
+    cartVerified = true;
+    btn.className = 'btn-check state-save';
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Purchase`;
+    
+    const avr = $('avr');
+    avr.innerHTML = `<div class="avr-section"><div class="avr-toggle" style="cursor:default;padding:12px 14px;"><div class="avr-toggle-dot" style="background:${CATS.staples.hex};"></div><span class="avr-toggle-label" style="flex:1;">Verification unavailable — you can still save</span></div></div>`;
+    avr.classList.add('show');
+    toast(friendlyError(err.message), CATS.staples.hex);
+  }
+});
+
+// ─── CLOUD HISTORY ─────────────────────────────
+/*
+  Security Architecture Note: 
+  The default sync code is set to 'siddiq-sajida-214' silently in the background 
+  but explicitly NOT populated into the `$('inp-sync').value` field to prevent shoulder-surfing.
+  If the input is empty, the fallback is used securely.
+*/
+let syncCode = localStorage.getItem('kaz_sync') || 'siddiq-sajida-214';
+
+function updateSyncCode() {
+  syncCode = $('inp-sync').value.trim() || 'siddiq-sajida-214';
+  localStorage.setItem('kaz_sync', syncCode);
+  renderHistory();
+  toast('Syncing from cloud...', CATS.drinks.hex);
+  $('inp-sync').value = '';
+}
+
+async function fetchBills() {
+  try {
+    const res = await fetch('/api/bills?syncCode=' + encodeURIComponent(syncCode));
+    return await res.json();
+  } catch(e) { console.error(e); return []; }
+}
+
+async function saveBill(bill) {
+  const res = await fetch('/api/bills', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ syncCode, bill })
+  });
+  
+  const text = await res.text();
+  try {
+    const data = JSON.parse(text);
+    if (!res.ok || data.error) throw new Error(data.error || 'Database rejected the save');
+    return data;
+  } catch (err) {
+    throw new Error(err.message === 'Database rejected the save' ? err.message : "Server endpoint crashed.");
+  }
+}
+
+async function doSavePurchase() {
+  const store  = $('inp-store').value.trim() || 'Shopping Trip';
+  const buyer  = $('inp-buyer').value.trim();
+  const total  = items.reduce((s, i) => s + i.total, 0);
+  const billNo = 'PUR-' + Math.floor(Math.random()*90000+10000);
+  
+  const btn = $('btn-check');
+  btn.innerHTML = `<span class="spin dark"></span> Saving...`;
+  btn.disabled = true;
+  
+  try {
+    await saveBill({ id:billNo, store, buyer, date:new Date().toISOString(), items:JSON.parse(JSON.stringify(items)), total });
+    
+    cartVerified = false;
+    items = []; 
+    reRenderList(); refreshSummary(); saveState();
+    resetCheckBtn();
+    $('avr').classList.remove('show');
+    $('avr').innerHTML = '';
+    toast('Saved to Cloud!', CATS.fresh.hex);
+  } catch (err) {
+    console.error("Save Error:", err);
+    btn.innerHTML = `Save Purchase`;
+    btn.disabled = false;
+    toast('Save failed: ' + friendlyError(err.message), CATS.snacks.hex);
+  }
+}
+
+async function renderHistory() {
+  const el = $('history-list');
+  el.innerHTML = `<div class="h-empty"><span class="spin dark" style="margin:0 auto 12px;display:block;"></span><p>Loading cloud bills...</p></div>`;
+  
+  const bills = await fetchBills();
+  
+  if (!bills.length) {
+    el.innerHTML = `<div class="h-empty"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><p>No purchases saved yet.</p></div>`;
+    return;
+  }
+  
+  el.innerHTML = '';
+  bills.forEach(bill => {
+    const d  = new Date(bill.date);
+    const ds = d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+    const ts = d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    const cats = [...new Set((bill.items||[]).map(i=>i.cat))].filter(k=>CATS[k]);
+    
+    const div = document.createElement('div');
+    div.className = 'card bill-card';
+    div.innerHTML = `
+      <div class="bc-top">
+        <div><div class="bc-store">${esc(bill.store)}</div>${bill.buyer?`<div class="bc-date" style="margin-top:2px;">${esc(bill.buyer)}</div>`:''}</div>
+        <span class="bc-amount">${fmt(bill.total)}</span>
+      </div>
+      <div class="bc-meta"><span class="bc-date">${ds} · ${ts} · ${(bill.items||[]).length} items · ${bill.id}</span></div>
+      <div class="bc-tags">${cats.map(c=>`<span class="bc-tag" style="border-color:${CATS[c].hex}44;color:${CATS[c].hex};">${CATS[c].label}</span>`).join('')}</div>
+      <div class="bc-actions">
+        <button class="btn-sm btn-sm-sage" data-pdf="${bill.id}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download Bill
+        </button>
+        <button class="btn-sm btn-sm-rust" data-del="${bill.id}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          Delete
+        </button>
+      </div>`;
+      
+    div.addEventListener('click', async (e) => {
+      const pdfBtn = e.target.closest('[data-pdf]');
+      const delBtn = e.target.closest('[data-del]');
+      if (pdfBtn) { generatePDF(bill); return; }
+      if (delBtn) {
+        showConfirm('Delete purchase','Permanently delete this saved purchase from the cloud?','Delete',
+          async () => { 
+            await fetch('/api/bills/' + bill.id + '?syncCode=' + encodeURIComponent(syncCode), { method: 'DELETE' });
+            renderHistory(); toast('Deleted from cloud',CATS.home.hex); 
+          });
+        return;
+      }
+      openBillModal(bill);
+    });
+    el.appendChild(div);
+  });
+}
+
+// ─── PDF GENERATOR ───────────────────────────────
+/*
+  PDF Layout Architecture:
+  Converts standard HTML block to PDF using html2pdf.js.
+  Uses CSS property `column-count: 2` to logically structure dense 50+ item shopping runs 
+  without wasting physical paper or vertical scrolling space.
+*/
+function generatePDF(bill) {
+  const d = new Date(bill.date);
+  const ds = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  const ts = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+  const grouped = {};
+  (bill.items || []).forEach(item => {
+    if (!grouped[item.cat]) grouped[item.cat] = [];
+    grouped[item.cat].push(item);
+  });
+
+  Object.keys(grouped).forEach(cat => {
+    grouped[cat].sort((a, b) => a.name.localeCompare(b.name));
+  });
+
+  let itemsHTML = '<div style="column-count: 2; column-gap: 40px; margin-bottom: 30px;">';
+  
+  const order = Object.keys(CATS).filter(k => grouped[k]);
+  
+  order.forEach(catKey => {
+    const catItems = grouped[catKey];
+    const catLabel = CATS[catKey]?.label || 'Other';
+
+    itemsHTML += `
+      <div style="margin-bottom: 20px; break-inside: avoid-column;">
+        <h4 style="margin: 0 0 10px 0; font-size: 12px; font-weight: 700; color: #1c1815; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid #eaeaea; padding-bottom: 4px;">
+          ${catLabel}
+        </h4>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+    `;
+
+    catItems.forEach(item => {
+      itemsHTML += `
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; break-inside: avoid;">
+            <div style="flex: 1; padding-right: 12px;">
+              <div style="font-size: 12px; color: #1c1815; font-weight: 500; line-height: 1.3;">${esc(item.name)}</div>
+              ${item.brand && item.brand !== '—' ? `<div style="font-size: 9px; color: #8a8480; margin-top: 1px;">${esc(item.brand)}</div>` : ''}
+            </div>
+            <div style="text-align: right; line-height: 1.2;">
+              <div style="font-size: 12px; color: #1c1815; font-weight: 500;">${fmt(item.total)}</div>
+              <div style="font-size: 9px; color: #8a8480; margin-top: 1px;">${fmtQ(item.qty)} x ${fmt(item.unitPrice)}</div>
+            </div>
+          </div>
+      `;
+    });
+
+    itemsHTML += `</div></div>`;
+  });
+  itemsHTML += '</div>';
+
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = `
+    <div style="padding: 40px; font-family: 'DM Sans', sans-serif; color: #1c1815; max-width: 800px; margin: 0 auto; background: white;">
+      
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
+        <div>
+          <h2 style="margin: 0; font-size: 22px; font-weight: 500;">${esc(bill.store)}</h2>
+          <p style="margin: 6px 0 0; color: #5c5550; font-size: 13px;">${bill.buyer ? esc(bill.buyer) : 'Grocery Run'}</p>
+        </div>
+        <div style="text-align: right;">
+          <h1 style="margin: 0; font-size: 32px; font-weight: 400; letter-spacing: -0.02em;">INVOICE</h1>
+          <p style="margin: 6px 0 0; color: #1c1815; font-size: 14px; font-weight: 500;">#${bill.id}</p>
+        </div>
+      </div>
+
+      <h3 style="font-size: 16px; font-weight: 400; border-bottom: 1px solid #dcdcdc; padding-bottom: 8px; margin-bottom: 20px;">Items</h3>
+
+      ${itemsHTML}
+
+      <div style="display: flex; justify-content: flex-end; border-top: 1px solid #dcdcdc; padding-top: 20px;">
+        <div style="width: 240px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px; color: #1c1815;">
+            <span>Total Items</span>
+            <span>${(bill.items || []).length}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 13px; color: #1c1815;">
+            <span>Date</span>
+            <span>${ds}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: 500; color: #1c1815;">
+            <span>Total</span>
+            <span>${fmt(bill.total)}</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 40px; display: flex; justify-content: space-between; font-size: 11px; color: #5c5550; border-top: 1px solid #dcdcdc; padding-top: 16px;">
+        <div>
+          <strong>Details</strong><br>
+          <span style="display:inline-block; margin-top:4px;">Generated via kaziir.in</span>
+        </div>
+        <div style="text-align: right;">
+          <strong>Time</strong><br>
+          <span style="display:inline-block; margin-top:4px;">${ts}</span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const opt = {
+    margin:       0,
+    filename:     `${bill.store.replace(/\s+/g, '_')}_${bill.id}.pdf`,
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2, useCORS: true },
+    jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+  };
+
+  toast('Generating minimal PDF...', CATS.drinks.hex);
+  
+  html2pdf().set(opt).from(wrapper.firstElementChild).save().then(() => {
+    toast('Bill downloaded!', CATS.fresh.hex);
+  });
+}
+
+// ─── CAMERA LOGIC ────────────────────────────
+$('btn-open-cam').addEventListener('click', () => $('cam-modal').classList.add('open'));
+$('cam-close').addEventListener('click', closeCam);
+$('cam-modal').addEventListener('click', e => { if(e.target===$('cam-modal')) closeCam(); });
+
+function closeCam() {
+  $('cam-modal').classList.remove('open'); stopCam();
+  $('scan-res').style.display='none'; $('scan-ind').classList.remove('show');
+  $('cam-ph').style.display=''; $('cam-preview').style.display='none';
+  $('cam-video').style.display='none'; $('btn-capture').style.display='none';
+  $('sc-qty-inp').value = '1';
+  const s=$('btn-cam-start'); s.style.display='flex'; s.disabled=false;
+  s.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="13" height="13"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg> Open Camera`;
+}
+
+function stopCam() {
+  if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
+  $('cam-video').srcObject=null;
+}
+
+$('btn-cam-start').addEventListener('click', async () => {
+  const btn=$('btn-cam-start'); btn.disabled=true;
+  btn.innerHTML=`<span class="spin"></span> Starting…`;
+  try {
+    try { camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}}); }
+    catch { camStream=await navigator.mediaDevices.getUserMedia({video:true}); }
+    const v=$('cam-video'); v.srcObject=camStream;
+    await new Promise((res,rej)=>{v.onloadedmetadata=res;v.onerror=rej;});
+    await v.play();
+    v.style.display='block'; $('cam-ph').style.display='none'; $('cam-preview').style.display='none';
+    btn.style.display='none'; $('btn-capture').style.display='flex';
+  } catch(err) {
+    console.error(err); btn.disabled=false;
+    btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg> Open Camera`;
+    toast('Camera unavailable — try uploading', CATS.snacks.hex);
+  }
+});
+
+$('btn-capture').addEventListener('click', () => {
+  const v = $('cam-video'), c = $('cam-canvas');
+  const w = v.videoWidth, h = v.videoHeight;
+  if (!w || !h) {
+    toast('Camera not ready yet — wait a moment and try again', CATS.staples.hex);
+    return;
+  }
+  c.width = w; c.height = h;
+  c.getContext('2d').drawImage(v, 0, 0);
+  const dataURL = c.toDataURL('image/jpeg', 0.9);
+  const b64 = dataURL.split(',')[1];
+
+  $('cam-preview').src = dataURL;
+  $('cam-preview').style.display = 'block';
+  stopCam();
+  $('cam-video').style.display = 'none';
+  $('btn-capture').style.display = 'none';
+  scanImage(b64, 'image/jpeg');
+});
+
+$('file-upload').addEventListener('change', e => {
+  const f=e.target.files[0]; if(!f) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const src=ev.target.result;
+    $('cam-preview').src=src; $('cam-preview').style.display='block'; $('cam-ph').style.display='none';
+    scanImage(src.split(',')[1],f.type||'image/jpeg');
+  };
+  reader.readAsDataURL(f); e.target.value='';
+});
+
+/*
+  AI Image Scanner Protocol:
+  System prompt updated to strictly enforce "Generic Name | Size/Weight" structure
+  with mandatory vertical bar delimiters based on the user's manual entry workflow preferences.
+  This allows cleaner UI rendering downstream.
+*/
+async function scanImage(base64, mediaType) {
+  $('scan-res').style.display = 'none';
+  $('scan-ind').classList.add('show');
+
+  if (!base64 || base64.length < 2700) {
+    $('scan-ind').classList.remove('show');
+    showScanResult('', '', 0, 'fresh');
+    toast('Image capture failed — try again or upload a photo', CATS.staples.hex);
+    return;
+  }
+
+  const mt = mediaType && mediaType.startsWith('image/') ? mediaType : 'image/jpeg';
+
+  try {
+    const res = await fetch('/api/gemini', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'gemini-2.5-flash',
+        max_tokens: 500,
+        system: `You are a strict grocery product scanner. Extract details following this EXACT format:
+1. Product name: Format as "Generic Name | Size/Weight" (e.g., "Toothpaste | 300g", "Cooking Oil | 1lt", "Instant Noodles | 560g"). Use abbreviations: g, kg, ml, lt, pcs. If no size is visible/applicable, just use the Generic Name (e.g., "Aluminium Kadai", "Mosquito Bat"). DO NOT put the brand here.
+2. Brand name: Include the parent brand AND the specific product line if applicable (e.g., "Colgate MaxFresh", "Nestle Milkmaid", "Dabur Gulabari"). Use empty string if not visible.
+3. Price in Indian Rupees as a number (use 0 if not visible)
+4. Category — pick exactly one key: fresh, staples, rte, drinks, snacks, frozen, home, household, personal, spices
+
+Respond ONLY with valid JSON, no markdown:
+{"name":"Product Name | 300g","brand":"Brand Line","price":0.00,"category":"key"}`,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mt, data: base64 } },
+            { type: 'text',  text:   'Extract product details from this image. Return only JSON.' }
+          ]
+        }]
+      })
+    });
+
+    const data = await res.json();
+    $('scan-ind').classList.remove('show');
+
+    if (data.error) {
+      throw new Error(data.error.message);
+    }
+
+    const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('').trim();
+    if (!text) throw new Error('Empty response from AI');
+
+    const p = JSON.parse(text.replace(/```json|```/g, '').trim());
+    const cat = CATS[p.category] ? p.category : classifyByKeyword(p.name || '');
+    showScanResult(p.name || '', p.brand || '', p.price || 0, cat);
+
+    if (!p.price || p.price === 0) {
+      toast('Price not detected — enter manually', CATS.staples.hex);
+    }
+
+  } catch(err) {
+    $('scan-ind').classList.remove('show');
+    console.error('Scan error:', err.message);
+    showScanResult('', '', 0, 'fresh');
+    toast('Scan failed: ' + friendlyError(err.message), CATS.snacks.hex);
+  }
+}
+
+function showScanResult(name,brand,price,catKey) {
+  $('sc-name').value=name; $('sc-brand').value=brand; $('sc-price').value=price>0?price:'';
+  pendingScannedCat=catKey;
+  const cat=CATS[catKey]||CATS.fresh;
+  $('sc-cat-dot').style.background=cat.hex; $('sc-cat-name').textContent=cat.label;
+  $('scan-res').style.display='block';
+}
+
+$('btn-add-sc').addEventListener('click', () => {
+  const ok=doAdd($('sc-name').value.trim(),$('sc-brand').value.trim(),parseFloat($('sc-price').value),parseQ($('sc-qty-inp').value),pendingScannedCat);
+  if(ok) closeCam();
+});
+
+// Scan modal stepper
+$('sc-qty-minus').addEventListener('click', () => { $('sc-qty-inp').value = fmtQ(stepQty($('sc-qty-inp').value, -1)); });
+$('sc-qty-plus').addEventListener('click',  () => { $('sc-qty-inp').value = fmtQ(stepQty($('sc-qty-inp').value,  1)); });
+$('sc-qty-inp').addEventListener('change',  () => { $('sc-qty-inp').value = fmtQ(parseQ($('sc-qty-inp').value)); });
+$('sc-qty-inp').addEventListener('blur',    () => { if(!$('sc-qty-inp').value) $('sc-qty-inp').value='1'; $('sc-qty-inp').value = fmtQ(parseQ($('sc-qty-inp').value)); });
+
+['inp-store','inp-buyer'].forEach(id => { $(id).addEventListener('input', saveState); });
+
+document.addEventListener('keydown', e => {
+  if(e.key==='Escape'){$('bill-modal').classList.remove('open');$('confirm-modal').classList.remove('open');closeCam();}
+});
+
+loadState();
+
+// ─── BILL MODAL & EDIT FEATURE ───────────────────────────
+let activeBillToEdit = null;
+
+function openBillModal(bill) {
+  activeBillToEdit = bill;
+  $('bm-title').textContent = bill.store || 'Purchase Details';
+  
+  let html = '';
+  (bill.items || []).forEach(item => {
+    html += `<div class="m-item">
+      <div>
+        <div class="m-name">${esc(item.name)}</div>
+        <div class="m-brand">${esc(item.brand)}</div>
+      </div>
+      <div>
+        <div class="m-total">${fmt(item.total)}</div>
+        <div class="m-qty">${fmtQ(item.qty)} x ${fmt(item.unitPrice)}</div>
+      </div>
+    </div>`;
+  });
+  
+  html += `<div class="m-grand">
+    <span class="m-grand-lbl">Total</span>
+    <span class="m-grand-val">${fmt(bill.total)}</span>
+  </div>`;
+  
+  html += `<div style="margin-top:24px; display:flex; flex-direction:column; gap:8px;">
+    <button class="btn-primary" style="width:100%;" onclick="startEditingBill()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      Edit this Purchase
+    </button>
+    <button class="btn-secondary" style="width:100%;" onclick="exportBillData()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Export Data (.json)
+    </button>
+  </div>`;
+
+  $('bm-body').innerHTML = html;
+  $('bill-modal').classList.add('open');
+}
+
+$('bm-close').addEventListener('click', () => $('bill-modal').classList.remove('open'));
+$('bill-modal').addEventListener('click', e => { if (e.target === $('bill-modal')) $('bill-modal').classList.remove('open'); });
+
+function startEditingBill() {
+  if (!activeBillToEdit) return;
+  $('bill-modal').classList.remove('open');
+  
+  showConfirm('Edit Purchase', 
+    'This will replace your current shopping list with the items from this bill. Continue?', 
+    'Yes, load list', 
+    () => {
+      items = JSON.parse(JSON.stringify(activeBillToEdit.items || []));
+      $('inp-store').value = activeBillToEdit.store || '';
+      $('inp-buyer').value = activeBillToEdit.buyer || '';
+      
+      cartVerified = false;
+      resetCheckBtn();
+      $('avr').classList.remove('show');
+      reRenderList(); 
+      refreshSummary(); 
+      saveState();
+      
+      document.querySelector('[data-tab="list"]').click();
+      toast('List loaded for editing', CATS.staples.hex);
+    }
+  );
+}
+
+// ─── EXPORT & IMPORT LOGIC ─────────────────────────────
+/*
+  Data Portability Note:
+  Enables offline sharing of shopping lists via tiny lightweight JSON payloads.
+  Useful for transferring lists between devices/family members without requiring the cloud database.
+*/
+function exportBillData() {
+  if (!activeBillToEdit) return;
+  
+  const exportData = {
+    app: "slate-kaziir",
+    store: activeBillToEdit.store || "Shopping Trip",
+    items: (activeBillToEdit.items || []).map(i => ({
+      name: i.name, brand: i.brand, cat: i.cat, unitPrice: i.unitPrice, qty: i.qty
+    }))
+  };
+  
+  const blob = new Blob([JSON.stringify(exportData)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `cart_${activeBillToEdit.id || Date.now()}.json`;
+  a.click();
+  
+  URL.revokeObjectURL(url);
+  toast('Cart data exported!', CATS.fresh.hex);
+}
+
+$('file-import-cart').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!data.items || !Array.isArray(data.items)) throw new Error("Invalid format");
+      
+      const importedItems = data.items.map(i => ({
+        id: Date.now() + Math.random().toString(36).slice(2,5),
+        name: i.name || 'Unknown',
+        brand: i.brand || '—',
+        qty: i.qty || 1,
+        unitPrice: i.unitPrice || 0,
+        cat: i.cat || 'fresh',
+        total: +((i.qty || 1) * (i.unitPrice || 0)).toFixed(2)
+      }));
+      
+      items = items.concat(importedItems);
+      if (data.store && !$('inp-store').value) $('inp-store').value = data.store;
+      
+      cartVerified = false;
+      resetCheckBtn();
+      $('avr').classList.remove('show');
+      
+      reRenderList();
+      refreshSummary();
+      saveState();
+      toast(`Imported ${importedItems.length} items!`, CATS.fresh.hex);
+      
+    } catch (err) {
+      toast('Failed to read file. Invalid format.', CATS.snacks.hex);
+    }
+  };
+  
+  reader.readAsText(file);
+  e.target.value = ''; 
+});
+</script>
+</body>
+</html>
