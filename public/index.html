@@ -297,13 +297,25 @@
     .avr-item {
       display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px;
       border-bottom: 1px solid var(--border); background: var(--surface);
+      flex-wrap: wrap; 
     }
     .avr-item:last-child { border-bottom: none; }
     .avr-num { font-family: var(--mono); font-size: 0.7rem; color: var(--subtle); min-width: 18px; padding-top: 2px; flex-shrink: 0; }
     .avr-info { flex: 1; min-width: 0; }
     .avr-name { font-size: 0.88rem; color: var(--ink); font-weight: 500; }
     .avr-note { font-size: 0.78rem; color: var(--muted); margin-top: 2px; line-height: 1.4; }
-    .avr-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; width: 100%; justify-content: flex-end; margin-top: 4px; }
+    .avr-actions { 
+      display: flex; gap: 6px; align-items: center; justify-content: flex-end; 
+      width: auto; margin-top: 0; 
+    }
+    .avr-item.editing-brand .avr-actions {
+      width: 100%;
+      margin-top: 6px;
+      padding-left: 28px;
+    }
+    .avr-brand-form { 
+      display: flex; flex-direction: column; gap: 8px; width: 100%; 
+    }
     
     .btn-fix {
       display: inline-flex; align-items: center; gap: 4px;
@@ -737,6 +749,25 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="auth-modal">
+  <div class="modal confirm-modal">
+    <div class="modal-hdr">
+      <span class="modal-title" id="auth-title">Cloud Sync</span>
+      <button class="modal-x" onclick="document.getElementById('auth-modal').classList.remove('open')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <p class="confirm-msg" id="auth-msg">To save to the cloud and sync across devices, please link your family account.</p>
+      <div style="margin-bottom: 18px;">
+        <input type="text" id="inp-auth-code" class="avr-brand-inp" placeholder="Enter Family Sync Code..." style="height: 38px;">
+      </div>
+      <div class="confirm-btns">
+        <a href="#" target="_blank" class="btn-cancel" style="text-decoration:none; display:inline-flex; align-items:center;">Get Free Code</a>
+        <button class="btn-primary" id="btn-link-account" onclick="applySyncCode()">Link & Sync</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="toast"><div class="t-dot" id="t-dot"></div><span id="t-msg">Done</span></div>
 
 <script>
@@ -1109,6 +1140,7 @@ function applyFix(itemId, field, value) {
 function showBrandInput(itemId) {
   const row = document.querySelector(`.avr-item[data-id="${itemId}"]`);
   if (!row) return;
+  row.classList.add('editing-brand');
   const actions = row.querySelector('.avr-actions');
   if (actions.querySelector('.avr-brand-form')) return;
   
@@ -1385,13 +1417,9 @@ Format your response EXACTLY like this (valid JSON only):
 });
 
 // ─── CLOUD HISTORY ─────────────────────────────
-/*
-  Security Architecture Note: 
-  The default sync code is set to 'siddiq-sajida-214' silently in the background 
-  but explicitly NOT populated into the `$('inp-sync').value` field to prevent shoulder-surfing.
-  If the input is empty, the fallback is used securely.
-*/
-let syncCode = localStorage.getItem('kaz_sync') || 'siddiq-sajida-214';
+let syncCode = localStorage.getItem('kaz_sync') || '';
+let guestPurchases = JSON.parse(localStorage.getItem('kaz_guest_bills') || '[]');
+let lockoutDate = parseInt(localStorage.getItem('kaz_lockout') || '0');
 
 function updateSyncCode() {
   syncCode = $('inp-sync').value.trim() || 'siddiq-sajida-214';
@@ -1434,40 +1462,148 @@ async function doSavePurchase() {
   const btn = $('btn-check');
   btn.innerHTML = `<span class="spin dark"></span> Saving...`;
   btn.disabled = true;
-  
+
+  const newBill = { id:billNo, store, buyer, date:new Date().toISOString(), items:JSON.parse(JSON.stringify(items)), total };
+
+  // --- GUEST MODE (LOCAL STORAGE) ---
+  if (!syncCode) {
+    // Check if they are locked out (5-day timer)
+    if (lockoutDate && Date.now() < lockoutDate) {
+      const daysLeft = Math.ceil((lockoutDate - Date.now()) / (1000 * 60 * 60 * 24));
+      $('auth-msg').textContent = `Guest mode is locked for ${daysLeft} more days. Please enter a Sync Code to continue saving.`;
+      $('auth-modal').classList.add('open');
+      resetSaveBtn(btn);
+      return;
+    }
+
+    // Check if they hit the 3 purchase limit (and aren't just editing an existing one)
+    if (guestPurchases.length >= 3 && !currentBillId) {
+      localStorage.setItem('kaz_lockout', Date.now() + (5 * 24 * 60 * 60 * 1000));
+      lockoutDate = parseInt(localStorage.getItem('kaz_lockout'));
+      $('auth-msg').textContent = "You've reached the 3-purchase limit for Guest Mode. To unlock your account and sync data, please get a free Family Sync Code.";
+      $('auth-modal').classList.add('open');
+      resetSaveBtn(btn);
+      return;
+    }
+
+    // Save locally
+    if (currentBillId) {
+      const idx = guestPurchases.findIndex(b => b.id === currentBillId);
+      if (idx > -1) guestPurchases[idx] = newBill;
+    } else {
+      guestPurchases.unshift(newBill);
+    }
+    localStorage.setItem('kaz_guest_bills', JSON.stringify(guestPurchases));
+    completeSaveAction(btn);
+    return;
+  }
+
+  // --- CLOUD MODE (POSTGRESQL) ---
   try {
-    await saveBill({ id:billNo, store, buyer, date:new Date().toISOString(), items:JSON.parse(JSON.stringify(items)), total });
-    
-    cartVerified = false;
-    items = []; 
-    currentBillId = null; 
-    
-    $('inp-store').value = ''; 
-    $('inp-buyer').value = '';
-    localStorage.removeItem('kaz_store');
-    localStorage.removeItem('kaz_buyer');
-    
-    reRenderList(); refreshSummary(); saveState();
-    resetCheckBtn();
-    $('avr').classList.remove('show');
-    $('avr').innerHTML = '';
-    toast('Saved to Cloud!', CATS.fresh.hex);
+    await saveBill(newBill);
+    completeSaveAction(btn);
   } catch (err) {
     console.error("Save Error:", err);
-    btn.innerHTML = `Save Purchase`;
-    btn.disabled = false;
+    resetSaveBtn(btn);
     toast('Save failed: ' + friendlyError(err.message), CATS.snacks.hex);
+  }
+}
+
+function resetSaveBtn(btn) {
+  btn.innerHTML = `Save Purchase`;
+  btn.disabled = false;
+}
+
+function completeSaveAction(btn) {
+  cartVerified = false;
+  items = []; 
+  currentBillId = null; 
+  
+  $('inp-store').value = ''; 
+  $('inp-buyer').value = '';
+  localStorage.removeItem('kaz_store');
+  localStorage.removeItem('kaz_buyer');
+  
+  reRenderList(); refreshSummary(); saveState();
+  resetCheckBtn();
+  $('avr').classList.remove('show');
+  $('avr').innerHTML = '';
+  toast(syncCode ? 'Saved to Cloud!' : 'Saved Locally (Guest Mode)', CATS.fresh.hex);
+}
+
+// --- MIGRATION LOGIC (LOCAL -> CLOUD) ---
+async function applySyncCode() {
+  const code = $('inp-auth-code').value.trim();
+  if (code.length < 3) { toast('Invalid code format', CATS.rust.hex); return; }
+
+  const btn = $('btn-link-account');
+  btn.innerHTML = `<span class="spin"></span> Syncing...`;
+  btn.disabled = true;
+
+  syncCode = code;
+
+  try {
+    // Bulk upload all local guest purchases to the new cloud account
+    for (const bill of guestPurchases) {
+      await saveBill(bill);
+    }
+    
+    // Clear local guest data once successfully migrated
+    guestPurchases = [];
+    localStorage.removeItem('kaz_guest_bills');
+    localStorage.removeItem('kaz_lockout');
+    lockoutDate = 0;
+    
+    // Persist the new cloud key
+    localStorage.setItem('kaz_sync', syncCode);
+    
+    $('auth-modal').classList.remove('open');
+    $('inp-sync').value = ''; // clear the history tab input if used
+    
+    // If they clicked this from an active cart, auto-save it now
+    if (items.length > 0 && cartVerified) {
+      await doSavePurchase();
+    } else {
+      renderHistory();
+      toast('Account Linked! Data migrated to cloud.', CATS.fresh.hex);
+    }
+  } catch (err) {
+    syncCode = ''; // Revert if the cloud rejects the code
+    toast('Sync failed. Check your connection.', CATS.rust.hex);
+  } finally {
+    btn.innerHTML = `Link & Sync`;
+    btn.disabled = false;
+  }
+}
+
+// Overwrite the manual "Load Cloud" button to trigger the new flow
+function updateSyncCode() {
+  const inputCode = $('inp-sync').value.trim();
+  if (inputCode) {
+    $('inp-auth-code').value = inputCode;
+    $('auth-msg').textContent = "Link this device to your Family Sync Code to view and save cloud purchases.";
+    $('auth-modal').classList.add('open');
+  } else {
+    toast('Please enter a Sync Code', CATS.staples.hex);
   }
 }
 
 async function renderHistory() {
   const el = $('history-list');
-  el.innerHTML = `<div class="h-empty"><span class="spin dark" style="margin:0 auto 12px;display:block;"></span><p>Loading cloud bills...</p></div>`;
+  el.innerHTML = `<div class="h-empty"><span class="spin dark" style="margin:0 auto 12px;display:block;"></span><p>Loading purchases...</p></div>`;
   
-  const bills = await fetchBills();
+  let bills = [];
+  let isCloud = false;
+
+  if (!syncCode) {
+    bills = guestPurchases; // Load from local array
+  } else {
+    bills = await fetchBills(); // Load from cloud
+    isCloud = true;
+  }
   
   if (!bills.length) {
-    el.innerHTML = `<div class="h-empty"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><p>No purchases saved yet.</p></div>`;
+    el.innerHTML = `<div class="h-empty"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><p>${isCloud ? 'No cloud purchases saved yet.' : 'No guest purchases saved yet.'}</p></div>`;
     return;
   }
   
@@ -1485,7 +1621,7 @@ async function renderHistory() {
         <div><div class="bc-store">${esc(bill.store)}</div>${bill.buyer?`<div class="bc-date" style="margin-top:2px;">${esc(bill.buyer)}</div>`:''}</div>
         <span class="bc-amount">${fmt(bill.total)}</span>
       </div>
-      <div class="bc-meta"><span class="bc-date">${ds} · ${ts} · ${(bill.items||[]).length} items · ${bill.id}</span></div>
+      <div class="bc-meta"><span class="bc-date">${ds} · ${ts} · ${(bill.items||[]).length} items · ${isCloud ? 'Cloud' : 'Local'}</span></div>
       <div class="bc-tags">${cats.map(c=>`<span class="bc-tag" style="border-color:${CATS[c].hex}44;color:${CATS[c].hex};">${CATS[c].label}</span>`).join('')}</div>
       <div class="bc-actions">
         <button class="btn-sm btn-sm-sage" data-pdf="${bill.id}">
@@ -1503,10 +1639,15 @@ async function renderHistory() {
       const delBtn = e.target.closest('[data-del]');
       if (pdfBtn) { generatePDF(bill); return; }
       if (delBtn) {
-        showConfirm('Delete purchase','Permanently delete this saved purchase from the cloud?','Delete',
+        showConfirm('Delete purchase', 'Permanently delete this saved purchase?', 'Delete',
           async () => { 
-            await fetch('/api/bills/' + bill.id + '?syncCode=' + encodeURIComponent(syncCode), { method: 'DELETE' });
-            renderHistory(); toast('Deleted from cloud',CATS.home.hex); 
+            if (isCloud) {
+              await fetch('/api/bills/' + bill.id + '?syncCode=' + encodeURIComponent(syncCode), { method: 'DELETE' });
+            } else {
+              guestPurchases = guestPurchases.filter(b => b.id !== bill.id);
+              localStorage.setItem('kaz_guest_bills', JSON.stringify(guestPurchases));
+            }
+            renderHistory(); toast('Deleted successfully', CATS.home.hex); 
           });
         return;
       }

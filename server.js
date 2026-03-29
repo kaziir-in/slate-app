@@ -40,31 +40,64 @@ pool.query(`
 `).then(() => console.log("Cloud Database connected")).catch(console.error);
 
 // ─── DATABASE API ROUTES ──────────────────────────────────────────
+// ─── DATABASE API ROUTES ──────────────────────────────────────────
+
+/*
+  Security Validation:
+  Ensures the database only accepts authorized family sync codes.
+  Whitelists the original admin code and allows any code starting with 'SLATE-'.
+*/
+function isValidSyncCode(code) {
+  if (!code || typeof code !== 'string') return false;
+  const cleanCode = code.trim();
+  return cleanCode === 'siddiq-sajida-214' || cleanCode.startsWith('SLATE-');
+}
+
 app.get('/api/bills', async (req, res) => {
+  const syncCode = req.query.syncCode;
+  
+  // The Gatekeeper
+  if (!isValidSyncCode(syncCode)) {
+    return res.status(403).json({ error: 'Invalid or missing Sync Code.' });
+  }
+
   try {
-    const result = await pool.query('SELECT * FROM purchases WHERE sync_code = $1 ORDER BY date DESC LIMIT 60', [req.query.syncCode || 'default']);
+    const result = await pool.query('SELECT * FROM purchases WHERE sync_code = $1 ORDER BY date DESC LIMIT 60', [syncCode]);
     res.json(result.rows);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post('/api/bills', async (req, res) => {
+  const { syncCode, bill } = req.body;
+  
+  // The Gatekeeper
+  if (!isValidSyncCode(syncCode)) {
+    return res.status(403).json({ error: 'Invalid or missing Sync Code. Please register your family.' });
+  }
+
   try {
-    const { syncCode, bill } = req.body;
     await pool.query(
       `INSERT INTO purchases (id, sync_code, store, buyer, date, total, items) 
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        ON CONFLICT (id) DO UPDATE SET 
        sync_code = EXCLUDED.sync_code, store = EXCLUDED.store, buyer = EXCLUDED.buyer, 
        date = EXCLUDED.date, total = EXCLUDED.total, items = EXCLUDED.items`,
-      [bill.id, syncCode || 'default', bill.store, bill.buyer, bill.date, bill.total, JSON.stringify(bill.items)]
+      [bill.id, syncCode, bill.store, bill.buyer, bill.date, bill.total, JSON.stringify(bill.items)]
     );
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.delete('/api/bills/:id', async (req, res) => {
+  const syncCode = req.query.syncCode;
+  
+  // The Gatekeeper
+  if (!isValidSyncCode(syncCode)) {
+    return res.status(403).json({ error: 'Unauthorized delete request.' });
+  }
+
   try {
-    await pool.query('DELETE FROM purchases WHERE id = $1 AND sync_code = $2', [req.params.id, req.query.syncCode]);
+    await pool.query('DELETE FROM purchases WHERE id = $1 AND sync_code = $2', [req.params.id, syncCode]);
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
