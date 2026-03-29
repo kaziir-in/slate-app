@@ -303,7 +303,7 @@
     .avr-info { flex: 1; min-width: 0; }
     .avr-name { font-size: 0.88rem; color: var(--ink); font-weight: 500; }
     .avr-note { font-size: 0.78rem; color: var(--muted); margin-top: 2px; line-height: 1.4; }
-    .avr-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+    .avr-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; width: 100%; justify-content: flex-end; margin-top: 4px; }
     
     .btn-fix {
       display: inline-flex; align-items: center; gap: 4px;
@@ -315,28 +315,33 @@
     .btn-fix:hover { background: var(--sienna); color: #fff; }
     .btn-fix svg { width: 10px; height: 10px; }
 
-    .avr-brand-form { display: flex; flex-direction: column; gap: 5px; align-items: flex-end; min-width: 140px; }
+    .avr-brand-form { display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: 6px; }
     .avr-brand-inp {
-      width: 100%; height: 28px; padding: 0 8px;
+      width: 100%; height: 32px; padding: 0 10px;
       background: var(--bg); border: 1px solid var(--bmd); border-radius: 6px;
-      font-family: var(--sans); font-size: 0.82rem; color: var(--text); outline: none;
+      font-family: var(--sans); font-size: 0.88rem; color: var(--text); outline: none;
       transition: border-color 0.15s;
     }
     .avr-brand-inp:focus { border-color: var(--bdk); }
     .avr-brand-inp::placeholder { color: var(--subtle); }
-    .avr-brand-btns { display: flex; gap: 5px; }
+    .avr-brand-btns { display: flex; gap: 6px; justify-content: flex-end; }
     .avr-brand-ok {
-      height: 24px; padding: 0 10px;
+      height: 28px; padding: 0 12px;
       background: var(--sage-bg); border: 1px solid rgba(74,103,65,0.25); color: var(--sage);
-      border-radius: 5px; font-size: 0.72rem; font-weight: 600; cursor: pointer; transition: all 0.14s;
+      border-radius: 6px; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.14s;
     }
     .avr-brand-ok:hover { background: var(--sage); color: #fff; }
     .avr-brand-cancel {
-      height: 24px; padding: 0 8px;
+      height: 28px; padding: 0 10px;
       background: none; border: 1px solid var(--bmd); color: var(--muted);
-      border-radius: 5px; font-size: 0.72rem; cursor: pointer; transition: all 0.14s;
+      border-radius: 6px; font-size: 0.78rem; cursor: pointer; transition: all 0.14s;
     }
     .avr-brand-cancel:hover { border-color: var(--rust); color: var(--rust); }
+    .avr-brand-warn {
+      font-size: 0.78rem; color: var(--rust); line-height: 1.4;
+      white-space: normal; text-align: left; background: var(--rust-bg);
+      padding: 8px 10px; border-radius: 6px; margin-bottom: 4px;
+    }
     
     .h-empty { text-align: center; padding: 60px 24px; color: var(--muted); }
     .h-empty svg { margin: 0 auto 12px; display: block; opacity: 0.2; }
@@ -661,6 +666,10 @@
         <button class="btn-cs" id="btn-capture" style="display:none;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
           Capture Image
+        </button>
+        <button class="btn-cu" id="btn-retake-sc" style="display:none; flex:1;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          Retake Image
         </button>
         <label class="btn-cu">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -1617,6 +1626,7 @@ function closeCam() {
   $('scan-res').style.display='none'; $('scan-ind').classList.remove('show');
   $('cam-ph').style.display=''; $('cam-preview').style.display='none';
   $('cam-video').style.display='none'; $('btn-capture').style.display='none';
+  $('btn-retake-sc').style.display='none'; // <-- Added this
   $('sc-qty-inp').value = '1';
   const s=$('btn-cam-start'); s.style.display='flex'; s.disabled=false;
   s.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="13" height="13"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg> Open Camera`;
@@ -1661,7 +1671,12 @@ $('btn-capture').addEventListener('click', () => {
   $('cam-preview').style.display = 'block';
   stopCam();
   $('cam-video').style.display = 'none';
+  
+  // Toggling the buttons:
   $('btn-capture').style.display = 'none';
+  $('btn-cam-start').style.display = 'none';
+  $('btn-retake-sc').style.display = 'flex'; 
+  
   scanImage(b64, 'image/jpeg');
 });
 
@@ -1671,9 +1686,37 @@ $('file-upload').addEventListener('change', e => {
   reader.onload=ev=>{
     const src=ev.target.result;
     $('cam-preview').src=src; $('cam-preview').style.display='block'; $('cam-ph').style.display='none';
+    
+    // Toggling the buttons:
+    $('btn-cam-start').style.display = 'none'; 
+    $('btn-capture').style.display = 'none';   
+    $('btn-retake-sc').style.display = 'flex'; 
+    
     scanImage(src.split(',')[1],f.type||'image/jpeg');
   };
   reader.readAsDataURL(f); e.target.value='';
+});
+
+// Add this right after the file-upload event listener
+$('btn-retake-sc').addEventListener('click', () => {
+  $('scan-res').style.display = 'none';
+  $('cam-preview').style.display = 'none';
+  $('cam-ph').style.display = 'none';
+  $('scan-ind').classList.remove('show');
+  
+  // Hide retake immediately
+  $('btn-retake-sc').style.display = 'none';
+  
+  if (!camStream) {
+    // If camera was off (e.g., they uploaded an image), start it up
+    $('btn-cam-start').style.display = 'flex';
+    $('btn-cam-start').click(); 
+  } else {
+    // If camera is already active, just show the video feed
+    $('cam-video').style.display = 'block';
+    $('btn-capture').style.display = 'flex';
+    $('cam-video').play();
+  }
 });
 
 /*
@@ -1801,7 +1844,7 @@ function openBillModal(bill) {
   
   html += `<div style="margin-top:24px; display:flex; flex-direction:column; gap:8px;">
     <button class="btn-primary" style="width:100%;" onclick="startEditingBill()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 18L19.9999 19.094C19.4695 19.6741 18.7502 20 18.0002 20C17.2501 20 16.5308 19.6741 16.0004 19.094C15.4693 18.5151 14.75 18.1901 14.0002 18.1901C13.2504 18.1901 12.5312 18.5151 12 19.094M3.00003 20H4.67457C5.16376 20 5.40835 20 5.63852 19.9447C5.84259 19.8957 6.03768 19.8149 6.21663 19.7053C6.41846 19.5816 6.59141 19.4086 6.93732 19.0627L19.5001 6.49998C20.3285 5.67156 20.3285 4.32841 19.5001 3.49998C18.6716 2.67156 17.3285 2.67156 16.5001 3.49998L3.93729 16.0627C3.59139 16.4086 3.41843 16.5816 3.29475 16.7834C3.18509 16.9624 3.10428 17.1574 3.05529 17.3615C3.00003 17.5917 3.00003 17.8363 3.00003 18.3255V20Z"/></svg>
       Edit this Purchase
     </button>
     <button class="btn-secondary" style="width:100%;" onclick="exportBillData()">

@@ -51,7 +51,11 @@ app.post('/api/bills', async (req, res) => {
   try {
     const { syncCode, bill } = req.body;
     await pool.query(
-      'INSERT INTO purchases (id, sync_code, store, buyer, date, total, items) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+      `INSERT INTO purchases (id, sync_code, store, buyer, date, total, items) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (id) DO UPDATE SET 
+       sync_code = EXCLUDED.sync_code, store = EXCLUDED.store, buyer = EXCLUDED.buyer, 
+       date = EXCLUDED.date, total = EXCLUDED.total, items = EXCLUDED.items`,
       [bill.id, syncCode || 'default', bill.store, bill.buyer, bill.date, bill.total, JSON.stringify(bill.items)]
     );
     res.json({ success: true });
