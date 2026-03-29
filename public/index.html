@@ -782,6 +782,7 @@ function classifyByKeyword(name) {
 // ─── STATE ───────────────────────────────
 let items = [];
 let selCat = 'fresh';
+let currentBillId = null;
 let userForcedCat = false;
 let pendingScannedCat = 'fresh';
 let camStream = null;
@@ -832,7 +833,7 @@ function toast(msg, color) {
 function friendlyError(errMsg) {
   const msg = String(errMsg || '').toLowerCase();
   
-  if (msg.includes('json.parse') || msg.includes('end of data')) return "AI response was interrupted. Please try again.";
+  if (msg.includes('json.parse') || msg.includes('end of data')) return "Couldn't read that clearly. Please try again.";
   if (msg.includes('quota') || msg.includes('429')) return "Too many requests. Please wait 60 seconds.";
   if (msg.includes('fetch') || msg.includes('network')) return "Network error. Check your connection.";
   if (msg.includes('api key')) return "API Key is missing or invalid.";
@@ -861,6 +862,21 @@ $('inp-name').addEventListener('input', () => {
     if (userForcedCat) return;
     const n = $('inp-name').value.trim(), b = $('inp-brand').value.trim();
     if (n.length > 2) setFormCat(classifyByKeyword(n));
+  }, 300);
+});
+
+let scClassifyTimer = null;
+$('sc-name').addEventListener('input', () => {
+  clearTimeout(scClassifyTimer);
+  scClassifyTimer = setTimeout(() => {
+    const n = $('sc-name').value.trim();
+    if (n.length > 2) {
+      const catKey = classifyByKeyword(n);
+      pendingScannedCat = catKey;
+      const cat = CATS[catKey] || CATS.fresh;
+      $('sc-cat-dot').style.background = cat.hex;
+      $('sc-cat-name').textContent = cat.label;
+    }
   }, 300);
 });
 
@@ -932,7 +948,8 @@ function doAdd(name, brand, price, q, cat) {
   qtyInp.value = '1';
   setFormCat('fresh');
   userForcedCat = false;
-  $('inp-name').focus();
+  if (window.innerWidth > 768) $('inp-name').focus();
+  else if (document.activeElement) document.activeElement.blur();
   return true;
 }
 
@@ -1135,18 +1152,15 @@ async function confirmBrand(itemId) {
       body: JSON.stringify({
         model: 'gemini-2.5-flash',
         max_tokens: 500,
-        system: `You are a grocery brand validator. The user is entering a brand name for a grocery product.
+        system: `You are a helpful grocery brand validator. 
+Given a product name and a brand name, gently advise if the brand is plausible for groceries.
+Return ok true if it's a valid food/household brand.
+Return ok false if it's clearly a tech/car/unrelated brand or gibberish.
 
-Given a product name and a brand name, decide if the brand is plausible for a grocery shopping list.
-Return ok true if: the brand sells food, beverages, or household/personal care products AND could plausibly make this product.
-Return ok false if: the brand is from a completely different industry (phones, cars, tech, clothing), is gibberish/random characters, or is clearly a typo.
+If ok, respond exactly: {"ok":true}
+If not ok, respond exactly: {"ok":false,"reason":"Friendly advice (e.g., 'Benyar usually makes watches. Are you sure this is a grocery brand?')"}
 
-Examples where ok is false: Product "Aloo Bhujia" brand "Oppo" — Oppo makes phones not food. Product "Milk" brand "Samsung" — tech brand. Product "Bread" brand "xkcd" — nonsense.
-Examples where ok is true: Product "Milk" brand "Amul". Product "Chips" brand "Lays". Product "Tea" brand "Tata".
-
-You MUST respond with ONLY a raw JSON object. No markdown, no backticks, no explanation. Start with { end with }.
-If ok, respond: {"ok":true}
-If not ok, respond: {"ok":false,"reason":"one short sentence"}`,
+Only output valid JSON. No markdown, no backticks.`,
         messages: [{ role: 'user', content: `Product: "${productName}" — Brand entered: "${val}"` }]
       })
     });
@@ -1415,7 +1429,7 @@ async function doSavePurchase() {
   const store  = $('inp-store').value.trim() || 'Shopping Trip';
   const buyer  = $('inp-buyer').value.trim();
   const total  = items.reduce((s, i) => s + i.total, 0);
-  const billNo = 'PUR-' + Math.floor(Math.random()*90000+10000);
+  const billNo = currentBillId || ('PUR-' + Math.floor(Math.random()*90000+10000));
   
   const btn = $('btn-check');
   btn.innerHTML = `<span class="spin dark"></span> Saving...`;
@@ -1426,6 +1440,13 @@ async function doSavePurchase() {
     
     cartVerified = false;
     items = []; 
+    currentBillId = null; 
+    
+    $('inp-store').value = ''; 
+    $('inp-buyer').value = '';
+    localStorage.removeItem('kaz_store');
+    localStorage.removeItem('kaz_buyer');
+    
     reRenderList(); refreshSummary(); saveState();
     resetCheckBtn();
     $('avr').classList.remove('show');
@@ -1868,6 +1889,7 @@ function startEditingBill() {
     'This will replace your current shopping list with the items from this bill. Continue?', 
     'Yes, load list', 
     () => {
+      currentBillId = activeBillToEdit.id;
       items = JSON.parse(JSON.stringify(activeBillToEdit.items || []));
       $('inp-store').value = activeBillToEdit.store || '';
       $('inp-buyer').value = activeBillToEdit.buyer || '';
