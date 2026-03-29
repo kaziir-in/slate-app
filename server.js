@@ -37,44 +37,49 @@ pool.query(`
     total NUMERIC(10, 2),
     items JSONB
   );
-`).then(() => console.log("Cloud Database connected")).catch(console.error);
+  
+  CREATE TABLE IF NOT EXISTS family_accounts (
+    code VARCHAR(50) PRIMARY KEY,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+`).then(() => {
+  console.log("Cloud Database connected");
+}).catch(console.error);
 
 // ─── DATABASE API ROUTES ──────────────────────────────────────────
-// ─── DATABASE API ROUTES ──────────────────────────────────────────
 
-/*
-  Security Validation:
-  Ensures the database only accepts authorized family sync codes.
-  Whitelists the original admin code and allows any code starting with 'SLATE-'.
-*/
-function isValidSyncCode(code) {
+// Helper: Checks the database to see if a code was explicitly initialized
+async function isCodeInitialized(code) {
   if (!code || typeof code !== 'string') return false;
-  const cleanCode = code.trim();
-  return cleanCode === 'siddiq-sajida-214' || cleanCode.startsWith('SLATE-');
+  const result = await pool.query('SELECT code FROM family_accounts WHERE code = $1', [code.trim()]);
+  return result.rows.length > 0;
 }
 
-app.get('/api/bills', async (req, res) => {
-  const syncCode = req.query.syncCode;
-  
-  // The Gatekeeper
-  if (!isValidSyncCode(syncCode)) {
-    return res.status(403).json({ error: 'Invalid or missing Sync Code.' });
-  }
-
+// 1. The Verification Endpoint
+app.post('/api/verify-code', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM purchases WHERE sync_code = $1 ORDER BY date DESC LIMIT 60', [syncCode]);
+    const isValid = await isCodeInitialized(req.body.code);
+    if (!isValid) return res.status(404).json({ error: 'This Sync Code does not exist. Please get a valid code.' });
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: 'Server validation error' }); }
+});
+
+// 2. Secured Bill Routes
+app.get('/api/bills', async (req, res) => {
+  if (!(await isCodeInitialized(req.query.syncCode))) {
+    return res.status(403).json({ error: 'Invalid or uninitialized Sync Code.' });
+  }
+  try {
+    const result = await pool.query('SELECT * FROM purchases WHERE sync_code = $1 ORDER BY date DESC LIMIT 60', [req.query.syncCode.trim()]);
     res.json(result.rows);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post('/api/bills', async (req, res) => {
   const { syncCode, bill } = req.body;
-  
-  // The Gatekeeper
-  if (!isValidSyncCode(syncCode)) {
-    return res.status(403).json({ error: 'Invalid or missing Sync Code. Please register your family.' });
+  if (!(await isCodeInitialized(syncCode))) {
+    return res.status(403).json({ error: 'Invalid Sync Code. Please link a registered account.' });
   }
-
   try {
     await pool.query(
       `INSERT INTO purchases (id, sync_code, store, buyer, date, total, items) 
@@ -82,22 +87,18 @@ app.post('/api/bills', async (req, res) => {
        ON CONFLICT (id) DO UPDATE SET 
        sync_code = EXCLUDED.sync_code, store = EXCLUDED.store, buyer = EXCLUDED.buyer, 
        date = EXCLUDED.date, total = EXCLUDED.total, items = EXCLUDED.items`,
-      [bill.id, syncCode, bill.store, bill.buyer, bill.date, bill.total, JSON.stringify(bill.items)]
+      [bill.id, syncCode.trim(), bill.store, bill.buyer, bill.date, bill.total, JSON.stringify(bill.items)]
     );
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.delete('/api/bills/:id', async (req, res) => {
-  const syncCode = req.query.syncCode;
-  
-  // The Gatekeeper
-  if (!isValidSyncCode(syncCode)) {
+  if (!(await isCodeInitialized(req.query.syncCode))) {
     return res.status(403).json({ error: 'Unauthorized delete request.' });
   }
-
   try {
-    await pool.query('DELETE FROM purchases WHERE id = $1 AND sync_code = $2', [req.params.id, syncCode]);
+    await pool.query('DELETE FROM purchases WHERE id = $1 AND sync_code = $2', [req.params.id, req.query.syncCode.trim()]);
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });

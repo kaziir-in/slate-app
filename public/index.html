@@ -1534,42 +1534,53 @@ function completeSaveAction(btn) {
 // --- MIGRATION LOGIC (LOCAL -> CLOUD) ---
 async function applySyncCode() {
   const code = $('inp-auth-code').value.trim();
-  if (code.length < 3) { toast('Invalid code format', CATS.rust.hex); return; }
+  if (code.length < 3) { toast('Please enter a valid code format', CATS.staples.hex); return; }
 
   const btn = $('btn-link-account');
-  btn.innerHTML = `<span class="spin"></span> Syncing...`;
+  btn.innerHTML = `<span class="spin"></span> Verifying...`;
   btn.disabled = true;
 
-  syncCode = code;
-
   try {
-    // Bulk upload all local guest purchases to the new cloud account
+    // 1. PING THE BACKEND TO VERIFY IF THE CODE EXISTS IN THE DATABASE
+    const verifyRes = await fetch('/api/verify-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
+    });
+    
+    const verifyData = await verifyRes.json();
+    if (!verifyRes.ok || verifyData.error) {
+      throw new Error(verifyData.error || 'Invalid Sync Code');
+    }
+
+    // 2. IF IT EXISTS, SET THE CODE AND MIGRATE LOCAL DATA
+    syncCode = code;
+    
     for (const bill of guestPurchases) {
-      await saveBill(bill);
+      await saveBill(bill); // Now guaranteed to be sent to a valid account
     }
     
-    // Clear local guest data once successfully migrated
+    // 3. CLEAN UP GUEST STATE
     guestPurchases = [];
     localStorage.removeItem('kaz_guest_bills');
     localStorage.removeItem('kaz_lockout');
     lockoutDate = 0;
-    
-    // Persist the new cloud key
     localStorage.setItem('kaz_sync', syncCode);
     
     $('auth-modal').classList.remove('open');
-    $('inp-sync').value = ''; // clear the history tab input if used
+    $('inp-sync').value = ''; 
     
-    // If they clicked this from an active cart, auto-save it now
+    // 4. AUTO-SAVE ACTIVE CART OR RENDER HISTORY
     if (items.length > 0 && cartVerified) {
       await doSavePurchase();
     } else {
       renderHistory();
       toast('Account Linked! Data migrated to cloud.', CATS.fresh.hex);
     }
+    
   } catch (err) {
-    syncCode = ''; // Revert if the cloud rejects the code
-    toast('Sync failed. Check your connection.', CATS.rust.hex);
+    syncCode = ''; // Revert immediately on failure
+    toast(friendlyError(err.message), CATS.snacks.hex);
   } finally {
     btn.innerHTML = `Link & Sync`;
     btn.disabled = false;
