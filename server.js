@@ -59,7 +59,7 @@ async function isCodeInitialized(code) {
 app.post('/api/verify-code', async (req, res) => {
   try {
     const isValid = await isCodeInitialized(req.body.code);
-    if (!isValid) return res.status(404).json({ error: 'This Sync Code does not exist. Please get a valid code.' });
+    if (!isValid) return res.status(404).json({ error: 'This Sync Code does not exist.' }); res.status(404).json({ error: 'Please get a valid code.' });
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: 'Server validation error' }); }
 });

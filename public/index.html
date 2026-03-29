@@ -79,6 +79,14 @@
     .tab-btn.active { background: var(--surface); border-color: var(--bmd); color: var(--text); box-shadow: var(--sh-sm); }
     .tab-btn:hover:not(.active) { color: var(--text2); }
 
+    .tab-logout {
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 10px; background: none; border: none; border-radius: 7px;
+      color: var(--muted); cursor: pointer; transition: all 0.15s;
+    }
+    .tab-logout:hover { color: var(--rust); background: var(--rust-bg); }
+    .tab-logout:active { transform: scale(0.95); }
+
     /* ── LAYOUT ── */
     main { max-width: 860px; margin: 0 auto; padding: 72px 22px 80px; }
     .page { display: none; }
@@ -516,6 +524,10 @@
   <div class="tab-bar">
     <button class="tab-btn active" data-tab="list">List</button>
     <button class="tab-btn" data-tab="history">Purchases</button>
+    <div style="width: 1px; background: var(--bmd); margin: 4px 6px;"></div>
+    <button class="tab-logout" id="btn-logout" title="Log Out / Reset App">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+    </button>
   </div>
 </nav>
 
@@ -624,7 +636,7 @@
               </div>
               <div class="fg">
                 <label class="lbl">Your Name (optional)</label>
-                <input type="text" id="inp-buyer" placeholder="Mohammed Azeez">
+                <input type="text" id="inp-buyer" placeholder="—">
               </div>
             </div>
             <div class="avr-wrap" id="avr"></div>
@@ -2128,6 +2140,45 @@ $('file-import-cart').addEventListener('change', e => {
   reader.readAsText(file);
   e.target.value = ''; 
 });
+
+// ─── LOGOUT & CACHE RESET ─────────────────────────────────
+$('btn-logout').addEventListener('click', () => {
+  showConfirm(
+    'Log Out & Reset', 
+    'Are you sure you want to log out? This will clear your active list and disconnect from the current cloud account.', 
+    'Log Out', 
+    () => {
+      // 1. Wipe local storage keys
+      localStorage.removeItem('kaz_sync');
+      localStorage.removeItem('kaz_items');
+      localStorage.removeItem('kaz_store');
+      localStorage.removeItem('kaz_buyer');
+      
+      // 2. Reset the JavaScript state
+      syncCode = '';
+      items = [];
+      cartVerified = false;
+      $('inp-store').value = '';
+      $('inp-buyer').value = '';
+      $('inp-sync').value = ''; // Clear the history tab input
+      
+      // 3. Update the UI
+      reRenderList();
+      refreshSummary();
+      resetCheckBtn();
+      $('avr').classList.remove('show');
+      
+      // 4. If on history tab, refresh to show empty state
+      const activeTab = document.querySelector('.tab-btn.active');
+      if (activeTab && activeTab.dataset.tab === 'history') {
+        renderHistory();
+      }
+      
+      toast('Logged out successfully.', CATS.home.hex);
+    }
+  );
+});
+
 </script>
 </body>
 </html>
