@@ -829,10 +829,12 @@ let currentBillId = null;
 let userForcedCat = false;
 let pendingScannedCat = 'fresh';
 let camStream = null;
-let toastTimer = null;
 let confirmCallback = null;
 let cartVerified = false;
 
+// New Toast Queue System
+let toastQueue = [];
+let isToasting = false;
 // ─── PERSIST ─────────────────────────────
 function saveState() {
   try {
@@ -861,11 +863,47 @@ const fmtQ = q => q % 1 === 0 ? String(q) : Number(q).toFixed(1);
 const parseQ = v => { const n = parseFloat(v); return isNaN(n) || n < 0.5 ? 0.5 : Math.round(n * 10) / 10; };
 
 function toast(msg, color) {
-  $('t-msg').textContent = msg;
-  $('t-dot').style.background = color || CATS.fresh.hex;
+  // If the message is long, auto-split it into readable chunks for sequential popups
+  if (typeof msg === 'string' && msg.length > 55) {
+    const words = msg.split(' ');
+    let currentChunk = '';
+    
+    words.forEach(word => {
+      if ((currentChunk.length + word.length) > 55) {
+        toastQueue.push({ msg: currentChunk.trim() + '...', color });
+        currentChunk = '...' + word + ' ';
+      } else {
+        currentChunk += word + ' ';
+      }
+    });
+    if (currentChunk.trim().length > 3) {
+      toastQueue.push({ msg: currentChunk.trim(), color });
+    }
+  } else {
+    // Short messages go straight to the queue
+    toastQueue.push({ msg, color });
+  }
+  processToastQueue();
+}
+
+function processToastQueue() {
+  if (isToasting || toastQueue.length === 0) return;
+  isToasting = true;
+  
+  const current = toastQueue.shift();
+  $('t-msg').textContent = current.msg;
+  $('t-dot').style.background = current.color || CATS.fresh.hex;
   $('toast').classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2800);
+  
+  // Hold each popup for 3.2 seconds
+  setTimeout(() => {
+    $('toast').classList.remove('show');
+    // Wait 400ms for the slide-down animation before showing the next popup
+    setTimeout(() => {
+      isToasting = false;
+      processToastQueue();
+    }, 400); 
+  }, 3200); 
 }
 
 /*
@@ -882,7 +920,7 @@ function friendlyError(errMsg) {
   if (msg.includes('api key')) return "API Key is missing or invalid.";
   if (msg.includes('timeout')) return "The AI took too long to respond. Try again.";
   
-  return msg.length > 50 ? errMsg.slice(0, 47) + '...' : errMsg;
+  return errMsg;
 }
 
 // ─── CATEGORY SELECT ─────────────────────
@@ -1545,7 +1583,7 @@ function completeSaveAction(btn) {
 
 // --- MIGRATION LOGIC (LOCAL -> CLOUD) ---
 async function applySyncCode() {
-  const code = $('inp-auth-code').value.trim();
+  const code = $('inp-auth-code').value.trim().toUpperCase();
   if (code.length < 3) { toast('Please enter a valid code format', CATS.staples.hex); return; }
 
   const btn = $('btn-link-account');
